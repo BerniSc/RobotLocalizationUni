@@ -24,7 +24,7 @@ static void help()
 
 // int thresh = 50, N = 5;
 int thresh = 40, N = 5;
-float sensitivity = 0.02; //Start bei 0.02
+float sensitivity = 0.02; // Start bei 0.02
 const char *wndname = "Square Detection Demo";
 
 const bool testMode = false;
@@ -143,25 +143,27 @@ static void drawSquares(Mat &image, const vector<vector<Point>> &squares)
 
 int main(int /*argc*/, char ** /*argv*/)
 {
-    //static const char *names[] = {"imgs/2Stickies.jpg", "imgs/manyStickies.jpg", 0};
-    help();
-    namedWindow(wndname, 1);
-    vector<vector<Point>> squares;
-
-    VideoCapture cap(0);
-    Mat image;
-
-    while(true)
+    if (testMode)
     {
-        cap >> image;
+        // static const char *names[] = {"imgs/2Stickies.jpg", "imgs/manyStickies.jpg", 0};
+        help();
+        namedWindow(wndname, 1);
+        vector<vector<Point>> squares;
 
-        resize(image, image, Size(image.cols/4, image.rows/4));
+        VideoCapture cap(0);
+        Mat image;
 
-        findSquares(image, squares);
-        drawSquares(image, squares);
-        // imwrite( "out", image );
-        int c = waitKey(500);
+        while (true)
+        {
+            cap >> image;
+
+            resize(image, image, Size(image.cols / 4, image.rows / 4));
+
+            findSquares(image, squares);
+            drawSquares(image, squares);
+            // imwrite( "out", image );
+            int c = waitKey(500);
+        }
     }
-
     return 0;
 }
