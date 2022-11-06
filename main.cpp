@@ -27,6 +27,8 @@ int thresh = 40, N = 5;
 float sensitivity = 0.02; //Start bei 0.02
 const char *wndname = "Square Detection Demo";
 
+const bool testMode = false;
+
 // helper function:
 // finds a cosine of angle between vectors
 // from pt0->pt1 and from pt0->pt2
