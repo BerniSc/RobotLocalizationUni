@@ -5,10 +5,22 @@
 #include <iostream>
 #include <math.h>
 #include <string.h>
-#include <time.h>
 
 using namespace cv;
 using namespace std;
+
+static void help()
+{
+    cout << "\nA program using pyramid scaling, Canny, contours, contour simpification and\n"
+            "memory storage to find squares in a list of images\n"
+            "Returns sequence of squares detected on the image.\n"
+            "the sequence is stored in the specified memory storage\n"
+            "Call:\n"
+            "./squares\n"
+            "Using OpenCV version %s\n"
+         << CV_VERSION << "\n"
+         << endl;
+}
 
 // int thresh = 50, N = 5;
 int thresh = 40, N = 5;
@@ -46,8 +58,8 @@ static void findSquares(const Mat &image, vector<vector<Point>> &squares)
     // find squares in every color plane of the image
     for (int c = 0; c < 3; c++)
     {
-           int ch[] = {c, 0};
-           mixChannels(&imageBlurred, 1, &gray0, 1, ch, 1);
+        int ch[] = {c, 0};
+        mixChannels(&imageBlurred, 1, &gray0, 1, ch, 1);
 
         // try several threshold levels
         for (int l = 0; l < N; l++)
@@ -105,7 +117,6 @@ static void findSquares(const Mat &image, vector<vector<Point>> &squares)
                     // if cosines of all angles are small
                     // (all angles are ~90 degree) then write quandrange
                     // vertices to resultant sequence
-                    //0,3
                     if (maxCosine < 0.3)
                         squares.push_back(approx);
                 }
@@ -114,44 +125,17 @@ static void findSquares(const Mat &image, vector<vector<Point>> &squares)
     }
 }
 
-bool comparePointsX(const Point &a, const Point &b) {
-    return(a.x > b.x);
-}
-
 // the function draws all the squares in the image
-static void drawSquares(Mat &image, vector<vector<Point>> &squares)
+static void drawSquares(Mat &image, const vector<vector<Point>> &squares)
 {
     for (size_t i = 0; i < squares.size(); i++)
     {
-        Point *p = &squares[i][0];
-        Point center(0, 0);
-
-        /*
-        sort(squares.begin(), squares.end(), [](vector<Point> const &a, vector<Point> const &b) {
-            return (a.at(0).x > b.at(0).x);
-        });
-        */
-
-        if(abs(squares[i][0].x - squares[i][3].x) > 10) {
-            center.x = squares[i][0].x+((squares[i][3].x)-(squares[i][0].x))/2;
-        } else {
-            center.x = squares[i][0].x+((squares[i][2].x)-(squares[i][0].x))/2;
-        }
-
-        if(abs(squares[i][0].y - squares[i][3].y) > 10) {
-            center.y = squares[i][0].y+((squares[i][3].y-(squares[i][0].y)))/2;
-        } else {
-            center.y = squares[i][0].y+((squares[i][2].y)-(squares[i][0].y))/2;
-        }
-
-        //cout << squares[i][0] << "  " << squares[i][1]<< "  " <<squares[i][2]  << " " << squares[i][3] << "         " << center << endl;
+        const Point *p = &squares[i][0];
 
         int n = (int)squares[i].size();
         // dont detect the border
-        if (p->x > 3 && p->y > 3) 
+        if (p->x > 3 && p->y > 3)
             polylines(image, &p, &n, 1, true, Scalar(0, 255, 0), 3, LINE_AA);
-
-            circle(image, center, 1, Scalar(0, 255, 0), 5);
     }
 
     imshow(wndname, image);
@@ -163,48 +147,24 @@ int main(int /*argc*/, char ** /*argv*/)
 {
     if (testMode)
     {
+        // static const char *names[] = {"imgs/2Stickies.jpg", "imgs/manyStickies.jpg", 0};
+        help();
         namedWindow(wndname, 1);
         vector<vector<Point>> squares;
 
         VideoCapture cap(0);
-
-        double fps = cap.get(CAP_PROP_FPS);
-        cout << "FPS CAM: " << fps << endl;
-
-        int numFrames = 1;
-
-        clock_t start, end;
-
-        double msBetweenFrames, fpsLive;
-
-        Mat image, imageGray;
+        Mat image;
 
         while (true)
         {
-            start = clock();
-
             cap >> image;
 
-            //resize(image, image, Size(image.cols / 2, image.rows / 2));
-
-            //cvtColor(image, imageGray, COLOR_BGR2GRAY);
-
-            findSquares(image, squares);
-            drawSquares(image, squares);
-
-            end = clock();
-
-            msBetweenFrames = (double(end) - double(start)) / double(CLOCKS_PER_SEC);
-
-            fpsLive = double(numFrames) / double(msBetweenFrames);
-
-            putText(image, "FPS: " + to_string(fpsLive), {50, 50}, FONT_HERSHEY_TRIPLEX, 1.5, (240, 120, 255));
-
+            resize(image, image, Size(image.cols / 4, image.rows / 4));
             imshow("Test", image);
-
+            //findSquares(image, squares);
+            //drawSquares(image, squares);
             // imwrite( "out", image );
             //int c = waitKey(500);
-            waitKey(10);
         }
     }
     return 0;
