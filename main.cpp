@@ -9,18 +9,22 @@
 using namespace cv;
 using namespace std;
 
+
 int blurModeGaussian = 0;
+/*
 int blurSizeKernel;                 //
 int cannyThresholdLow = 30;         //Range 0 to 30
 int cannyThresholdHigh = 120;       //Range 0 to 120
-int brightness = 0;                 //Range from -100 to 100
+int brightness = 0;                 //Range from -100 to 
+*/
 
 /**     Descriptors     **/
 parameterDescription blurMode(0, 1, 0, "Blur Mode");
 parameterDescription blurSize(0, 6, 9, "Bluring Size (1:=3 ,2:=5 etc.)");
 parameterDescription cannyLow(0, 30, 12, "Canny Threshold Low");
 parameterDescription cannyHigh(0, 120, 35, "Canny Threshold High");
-parameterDescription resizeSize(0, 50, 0, "Window Size (in %)");
+parameterDescription resizeSize(0, 50, 25, "Window Size (in %)");
+parameterDescription displayWindowSize(0, 50, 25, "Displaywindow Size (in %)");
 
 /***/
 void callback_trackbar_BlurMode(int mode, void* userData);
@@ -28,6 +32,7 @@ void callback_trackbar_BlurSize(int blurKernelValue, void* userData);
 void callback_trackbar_ThresholdLow(int cannyLow, void* userData);
 void callback_trackbar_ThresholdHigh(int cannyHigh, void* userData);
 void callback_trackbar_WindowSize(int WindowSize, void* userData);
+void callback_trackbar_DisplayWindowSize(int WindowSize, void* userData);
 
 Mat getCanny(Mat& original);
 Mat getBlurred(Mat& original);
@@ -50,11 +55,12 @@ int main(int argc, char** argv) {
     namedWindow("Blurred Image", WINDOW_AUTOSIZE);
     namedWindow("Canny Image", WINDOW_AUTOSIZE);
     
-    createTrackbar(resizeSize.name, "Control Window", &resizeSize.selectedValue, resizeSize.getMaxValueForSlider(), callback_trackbar_WindowSize, &image);
+    createTrackbar(resizeSize.name, "Control Window", &resizeSize.selectedValue, resizeSize.getMaxValueForSlider(), callback_trackbar_WindowSize, &imageGray);
     createTrackbar(blurMode.name, "Control Window", &blurMode.selectedValue, blurMode.getMaxValueForSlider(), callback_trackbar_BlurMode, &image);
     createTrackbar(blurSize.name, "Control Window", &blurSize.selectedValue, blurSize.getMaxValueForSlider(), callback_trackbar_BlurSize, &image);
     createTrackbar(cannyLow.name, "Control Window", &cannyLow.selectedValue, cannyLow.getMaxValueForSlider(), callback_trackbar_ThresholdLow, &imageBlurred);
     createTrackbar(cannyHigh.name, "Control Window", &cannyHigh.selectedValue, cannyHigh.getMaxValueForSlider(), callback_trackbar_ThresholdHigh, &imageBlurred);
+    createTrackbar(displayWindowSize.name, "Control Window", &displayWindowSize.selectedValue, displayWindowSize.getMaxValueForSlider(), callback_trackbar_DisplayWindowSize, &image);
 
     if(!image.data && !imageGray.data) {
         cout << "Kann Bild nicht öffnen!" << endl;
@@ -78,9 +84,9 @@ void callback_trackbar_BlurMode(int mode, void* userData) {
     blurModeGaussian = !blurModeGaussian;
     cout << "Button Pressed " << blurModeGaussian << endl;
     
-    Mat blurred = getBlurred(m);
-    imshow("Blurred Image", blurred);
-    imshow("Canny Image", getCanny(blurred));
+    imageBlurred = getBlurred(m);
+    imshow("Blurred Image", imageBlurred);
+    imshow("Canny Image", getCanny(imageBlurred));
 }
 
 void callback_trackbar_BlurSize(int blurKernelValue, void* userData) {
@@ -106,16 +112,20 @@ void callback_trackbar_ThresholdHigh(int cannyHigh, void* userData) {
 
 void callback_trackbar_WindowSize(int windowSize, void* userData) {
     Mat m = *(static_cast<Mat*>(userData));
-    cout << resizeSize.getValue() << endl;
     resize(m, m, cv::Size(), (100-resizeSize.getValue())/100.0, (100-resizeSize.getValue())/100.0);
-    //resize(image, image, cv::Size(), (100-resizeSize.getValue())/100.0, (100-resizeSize.getValue())/100.0);
-    resize(imageGray, imageGray, cv::Size(), (100.0-resizeSize.getValue())/100.0, (100.0-resizeSize.getValue())/100.0);
-    //resize(imageBlurred, imageBlurred, cv::Size(), (100-resizeSize.getValue())/100.0, (100-resizeSize.getValue())/100.0);
-    //resize(imageCanny, imageCanny, cv::Size(), (100-resizeSize.getValue())/100.0, (100-resizeSize.getValue())/100.0);
+    imshow("Gray Image", m);
+    Mat b = getBlurred(m);
+    imshow("Blurred Image", b);
+    imshow("Canny Image", getCanny(b));
+}
+
+void callback_trackbar_DisplayWindowSize(int WindowSize, void* userData) {
+    Mat m = *(static_cast<Mat*>(userData));
+
+    cout << displayWindowSize.getValue() << endl;
+
+    resize(m, m, cv::Size(), (100-displayWindowSize.getValue())/100.0, (100-displayWindowSize.getValue())/100.0);
     imshow("Normal Image", m);
-    imshow("Test", imageGray);
-    //imshow(imageBlurred.displayWindow, imageBlurred);
-    //imshow(imageCanny.displayWindow, imageCanny);
 }
 
 Mat getCanny(Mat& original) {
