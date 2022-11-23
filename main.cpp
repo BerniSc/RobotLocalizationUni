@@ -34,8 +34,12 @@ void callback_trackbar_ThresholdHigh(int cannyHigh, void* userData);
 void callback_trackbar_WindowSize(int WindowSize, void* userData);
 void callback_trackbar_DisplayWindowSize(int WindowSize, void* userData);
 
+void refresh();
+
 Mat getCanny(Mat& original);
 Mat getBlurred(Mat& original);
+
+int colsImageStart, rowsImageStart;
 
 Mat image;
 Mat imageGray;
@@ -44,6 +48,8 @@ Mat imageCanny;
 
 int main(int argc, char** argv) {
     image = imread("Eisbaer.jpg", IMREAD_COLOR);
+    colsImageStart = image.cols;
+    rowsImageStart = image.rows;
     imageGray = imread("Eisbaer.jpg", IMREAD_GRAYSCALE);
 
     imageBlurred = getBlurred(imageGray);
@@ -67,11 +73,10 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    imageBlurred = getBlurred(image);
+    imageCanny = getCanny(imageBlurred);
     
-    imshow("Normal Image", image);
-    imshow("Gray Image", imageGray);
-    imshow("Blurred Image", getBlurred(image));
-    imshow("Canny Image", getCanny(imageBlurred));
+    refresh();
 
     waitKey(0);
     return 0;
@@ -85,8 +90,8 @@ void callback_trackbar_BlurMode(int mode, void* userData) {
     cout << "Button Pressed " << blurModeGaussian << endl;
     
     imageBlurred = getBlurred(m);
-    imshow("Blurred Image", imageBlurred);
-    imshow("Canny Image", getCanny(imageBlurred));
+    imageCanny = getCanny(imageBlurred);
+    refresh();
 }
 
 void callback_trackbar_BlurSize(int blurKernelValue, void* userData) {
@@ -95,19 +100,24 @@ void callback_trackbar_BlurSize(int blurKernelValue, void* userData) {
     blurSize.selectedValue = blurKernelValue;
     //cout << "valueBlurKernel: " << blurKernelValue << " " << blurSize.getValue() <<endl;
     
-    Mat blurred = getBlurred(m);
-    imshow("Blurred Image", blurred);
-    imshow("Canny Image", getCanny(blurred));
+    image = m;
+    imageBlurred = getBlurred(m);
+    imageCanny = getCanny(imageBlurred);
+    refresh();
 }
 
 void callback_trackbar_ThresholdLow(int cannyLow, void* userData) {
     Mat m = *(static_cast<Mat*>(userData));
-    imshow("Canny Image", getCanny(m));
+    imageCanny = getCanny(m);
+    //imshow("Canny Image", imageCanny);
+    refresh();
 }
 
 void callback_trackbar_ThresholdHigh(int cannyHigh, void* userData) {
     Mat m = *(static_cast<Mat*>(userData));
-    imshow("Canny Image", getCanny(m));
+    imageCanny = getCanny(m);
+    refresh();
+    //imshow("Canny Image", imageCanny);
 }
 
 void callback_trackbar_WindowSize(int windowSize, void* userData) {
@@ -117,15 +127,15 @@ void callback_trackbar_WindowSize(int windowSize, void* userData) {
     Mat b = getBlurred(m);
     imshow("Blurred Image", b);
     imshow("Canny Image", getCanny(b));
+    //refresh();
 }
 
 void callback_trackbar_DisplayWindowSize(int WindowSize, void* userData) {
     Mat m = *(static_cast<Mat*>(userData));
-
-    cout << displayWindowSize.getValue() << endl;
-
+    //cout << displayWindowSize.getValue() << endl;
     resize(m, m, cv::Size(), (100-displayWindowSize.getValue())/100.0, (100-displayWindowSize.getValue())/100.0);
     imshow("Normal Image", m);
+    //refresh();
 }
 
 Mat getCanny(Mat& original) {
@@ -142,4 +152,15 @@ Mat getBlurred(Mat& original) {
         medianBlur(original, blurred, blurSize.getValue());
     }
     return blurred;
+}
+
+void refresh() {
+    resize(image, image, cv::Size(colsImageStart * ((100-displayWindowSize.getValue())/100.0), rowsImageStart * ((100-displayWindowSize.getValue())/100.0)));
+    imshow("Normal Image", image);
+    resize(imageGray, imageGray, cv::Size(colsImageStart * ((100-resizeSize.getValue())/100.0), rowsImageStart * ((100-resizeSize.getValue())/100.0)));
+    imshow("Gray Image", imageGray);
+    resize(imageBlurred, imageBlurred, cv::Size(colsImageStart * ((100-resizeSize.getValue())/100.0), rowsImageStart * ((100-resizeSize.getValue())/100.0)));
+    imshow("Blurred Image", imageBlurred);
+    resize(imageCanny, imageCanny, cv::Size(colsImageStart * ((100-resizeSize.getValue())/100.0), rowsImageStart * ((100-resizeSize.getValue())/100.0)));;
+    imshow("Canny Image", imageCanny);
 }
