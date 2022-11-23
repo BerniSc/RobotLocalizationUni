@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CONTROLL_WINDOW_H
+#define CONTROLL_WINDOW_H
 
 #include <string>
 #include <vector>
@@ -31,3 +32,5 @@ struct parameterDescription {
 /*  Change Brightness Values    */
 
 /*  Change Mode Bluring */
+
+#endif

@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "control_window_params.hpp"
+#include "image_collection.hpp"
 
 using namespace cv;
 using namespace std;
@@ -19,7 +20,7 @@ parameterDescription blurMode(0, 1, 0, "Blur Mode");
 parameterDescription blurSize(0, 6, 9, "Bluring Size (1:=3 ,2:=5 etc.)");
 parameterDescription cannyLow(0, 30, 12, "Canny Threshold Low");
 parameterDescription cannyHigh(0, 120, 35, "Canny Threshold High");
-parameterDescription resizeSize(-2, 2, 1, "Window Size (-2 := 0,5 -> 2 := 2)");
+parameterDescription resizeSize(0, 50, 0, "Window Size (in %)");
 
 /***/
 void callback_trackbar_BlurMode(int mode, void* userData);
@@ -31,14 +32,19 @@ void callback_trackbar_WindowSize(int WindowSize, void* userData);
 Mat getCanny(Mat& original);
 Mat getBlurred(Mat& original);
 
+Mat image;
+Mat imageGray;
+Mat imageBlurred;
+Mat imageCanny;
+
 int main(int argc, char** argv) {
-    Mat image = imread("Eisbaer.jpg", IMREAD_COLOR);
-    Mat imageGray = imread("Eisbaer.jpg", IMREAD_GRAYSCALE);
+    image = imread("Eisbaer.jpg", IMREAD_COLOR);
+    imageGray = imread("Eisbaer.jpg", IMREAD_GRAYSCALE);
 
-    Mat imageBlurred = getBlurred(imageGray);
-    Mat imageCanny = getCanny(imageBlurred);
+    imageBlurred = getBlurred(imageGray);
+    imageCanny = getCanny(imageBlurred);
 
-    namedWindow("Control Window");
+    namedWindow("Control Window", WINDOW_AUTOSIZE);
     namedWindow("Normal Image", WINDOW_AUTOSIZE);
     namedWindow("Gray Image", WINDOW_AUTOSIZE);
     namedWindow("Blurred Image", WINDOW_AUTOSIZE);
@@ -101,14 +107,15 @@ void callback_trackbar_ThresholdHigh(int cannyHigh, void* userData) {
 void callback_trackbar_WindowSize(int windowSize, void* userData) {
     Mat m = *(static_cast<Mat*>(userData));
     cout << resizeSize.getValue() << endl;
-    if(resizeSize.getValue() == 0) {
-        return;
-    } else if(resizeSize.getValue() > 0) {
-        resize(m, m, cv::Size(), resizeSize.getValue(), resizeSize.getValue());
-    } else {
-        resize(m, m, cv::Size(), 1.0/(-resizeSize.getValue()), 1.0/(-resizeSize.getValue()));
-    }
+    resize(m, m, cv::Size(), (100-resizeSize.getValue())/100.0, (100-resizeSize.getValue())/100.0);
+    //resize(image, image, cv::Size(), (100-resizeSize.getValue())/100.0, (100-resizeSize.getValue())/100.0);
+    resize(imageGray, imageGray, cv::Size(), (100.0-resizeSize.getValue())/100.0, (100.0-resizeSize.getValue())/100.0);
+    //resize(imageBlurred, imageBlurred, cv::Size(), (100-resizeSize.getValue())/100.0, (100-resizeSize.getValue())/100.0);
+    //resize(imageCanny, imageCanny, cv::Size(), (100-resizeSize.getValue())/100.0, (100-resizeSize.getValue())/100.0);
     imshow("Normal Image", m);
+    imshow("Test", imageGray);
+    //imshow(imageBlurred.displayWindow, imageBlurred);
+    //imshow(imageCanny.displayWindow, imageCanny);
 }
 
 Mat getCanny(Mat& original) {
