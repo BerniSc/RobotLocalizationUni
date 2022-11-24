@@ -131,8 +131,8 @@ int main(int argc, char** argv) {
             imageBlurred = getBlurred(imageGray);
             imageCanny = getCanny(imageBlurred);
 
-            findSquares(imageCanny, squares);
-            drawSquares(image, squares);
+            findSquares(imageCanny, image, squares);
+            //drawSquares(image, squares);
 
             end = clock();
 
@@ -146,7 +146,7 @@ int main(int argc, char** argv) {
             imshow("Normal Image", image);
             imshow("Canny Image", imageCanny);
 
-            waitKey(500);
+            waitKey(10);
         }
     }
     return 0;

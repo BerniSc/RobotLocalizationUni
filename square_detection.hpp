@@ -27,23 +27,18 @@ void drawPoint(cv::Mat &image, const cv::Point &point) {
     circle(image, point, 1, cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
 }
 
-void drawSquares(cv::Mat &image, std::vector<std::vector<cv::Point>> &squares) {
-    for(size_t i = 0; i < squares.size(); i++) {
-        cv::Point *p = &squares[i][0];
+void drawSquares(cv::Mat &image, std::vector<cv::Point> &squares) {
+    //for(size_t i = 0; i < squares.size(); i++) {
+        cv::Point *p = &squares[0];
 
-        int n = (int) squares[i].size();
-
-        //cv::Point center(0, 0);
-
-        //center.x = 2 * squares[i][0].x - squares[i][3].x;
-        //center.y = 2 * squares[i][0].y - squares[i][1].y;
+        int n = (int) squares.size();
 
         //das Bildrahmen nicht erkannt wird
-        if(p->x > 3 && p->y > 3) {
+        if(squares[0].x > 3 && squares[0].y > 3) {
             cv::polylines(image, &p, &n, 1, true, cv::Scalar(0, 255, 0), 3, cv::LINE_AA);
-            //drawPoint(image, center);
+
         }
-    }
+    //}
 }
 
 void findSquares(const cv::Mat &imageCanny, cv::Mat &imageToDrawOn, std::vector<std::vector<cv::Point>> &squares) {
@@ -73,10 +68,23 @@ void findSquares(const cv::Mat &imageCanny, cv::Mat &imageToDrawOn, std::vector<
             if(maxCosine < 0.3) {
                 //sort(approx.begin(), approx.end(), sortByXAxis);
                 for(int i = 0; i <= 3; i++) {
-                    std::cout << "      " << approx.at(i); 
+                    //std::cout << "      " << approx.at(i); 
                 }
                 std::cout << std::endl;
-                squares.push_back(approx);
+                drawSquares(imageToDrawOn, approx);
+                
+                sort(approx.begin(), approx.end(), sortByXAxis);
+
+
+                cv::Point center(0, 0);
+
+                center.x = (approx[3].x - approx[0].x) / 2 + approx[0].x;
+                center.y = (approx[1].y - approx[0].y) / 2 + approx[0].y;
+
+                std::cout << "DREW Point at: " << center << std::endl;
+
+                            drawPoint(imageToDrawOn, center);
+                //squares.push_back(approx);
             }
         }
     }
