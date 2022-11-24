@@ -51,7 +51,7 @@ Mat image;
 Mat imageGray;
 Mat imageBlurred;
 Mat imageCanny;
-
+//TODO ADD THRESHHOLD SLIDERS
 int main(int argc, char** argv) {
     namedWindow("Control Window", WINDOW_AUTOSIZE);
     namedWindow("Normal Image", WINDOW_AUTOSIZE);
@@ -108,9 +108,9 @@ int main(int argc, char** argv) {
 
             cap >> image;
             resize(image, image, cv::Size(), (100-displayWindowSize.getValue())/100.0, (100-displayWindowSize.getValue())/100.0);
-            if(thresholdModeBool) threshold(image, image, 100, 255, THRESH_BINARY);
             cvtColor(image, imageGray, COLOR_BGR2GRAY);
-            imageBlurred = getBlurred(image);
+            if(thresholdModeBool) threshold(imageGray, imageGray, 80, 255, THRESH_BINARY);
+            imageBlurred = getBlurred(imageGray);
             imageCanny = getCanny(imageBlurred);
 
             end = clock();
@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
             putText(image, "MAX FPS: " + to_string(CAP_PROP_FPS), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
             putText(image, "FPS: " + to_string(fpsLive), {50, image.rows-50}, FONT_HERSHEY_COMPLEX, 1.5, Scalar(153, 153, 0), 2);
 
-            imshow("Normal Image", image);
+            imshow("Normal Image", imageGray);
             imshow("Canny Image", imageCanny);
 
             waitKey(10);
