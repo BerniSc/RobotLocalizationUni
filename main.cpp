@@ -7,6 +7,10 @@
 #include "image_collection.hpp"
 #include "square_detection.hpp"
 
+#include <opencv2/video.hpp>
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/videoio.hpp"
+
 using namespace cv;
 using namespace std;
 
@@ -30,15 +34,19 @@ parameterDescription cannyLow(0, 60, 12, "Canny Threshold Low");
 parameterDescription cannyHigh(0, 180, 35, "Canny Threshold High");
 parameterDescription resizeSize(0, 50, 0, "Window Size (in %)");
 parameterDescription displayWindowSize(0, 50, 0, "Displaywindow Size (in %)");
+parameterDescription thresholdLow(0,255, 80, "Lower Threshold Value");
+parameterDescription thresholdHigh(0, 255, 255, "Higher Threshold Value");
 
 /***/
 void callback_trackbar_thresholdMode(int mode, void* userData);
 void callback_trackbar_BlurMode(int mode, void* userData);
 void callback_trackbar_BlurSize(int blurKernelValue, void* userData);
-void callback_trackbar_ThresholdLow(int cannyLow, void* userData);
-void callback_trackbar_ThresholdHigh(int cannyHigh, void* userData);
+void callback_trackbar_ThresholdCannyLow(int cannyLow, void* userData);
+void callback_trackbar_ThresholdCannyHigh(int cannyHigh, void* userData);
 void callback_trackbar_WindowSize(int WindowSize, void* userData);
 void callback_trackbar_DisplayWindowSize(int WindowSize, void* userData);
+void callback_trackbar_ThresholdLow(int cannyLow, void* userData);
+void callback_trackbar_ThresholdHigh(int cannyLow, void* userData);
 
 void refresh();
 
@@ -65,10 +73,12 @@ int main(int argc, char** argv) {
     createTrackbar(resizeSize.name, "Control Window", &resizeSize.selectedValue, resizeSize.getMaxValueForSlider(), callback_trackbar_WindowSize, &imageGray);
     createTrackbar(blurMode.name, "Control Window", &blurMode.selectedValue, blurMode.getMaxValueForSlider(), callback_trackbar_BlurMode, &image);
     createTrackbar(blurSize.name, "Control Window", &blurSize.selectedValue, blurSize.getMaxValueForSlider(), callback_trackbar_BlurSize, &image);
-    createTrackbar(cannyLow.name, "Control Window", &cannyLow.selectedValue, cannyLow.getMaxValueForSlider(), callback_trackbar_ThresholdLow, &imageBlurred);
-    createTrackbar(cannyHigh.name, "Control Window", &cannyHigh.selectedValue, cannyHigh.getMaxValueForSlider(), callback_trackbar_ThresholdHigh, &imageBlurred);
+    createTrackbar(cannyLow.name, "Control Window", &cannyLow.selectedValue, cannyLow.getMaxValueForSlider(), callback_trackbar_ThresholdCannyLow, &imageBlurred);
+    createTrackbar(cannyHigh.name, "Control Window", &cannyHigh.selectedValue, cannyHigh.getMaxValueForSlider(), callback_trackbar_ThresholdCannyHigh, &imageBlurred);
     createTrackbar(displayWindowSize.name, "Control Window", &displayWindowSize.selectedValue, displayWindowSize.getMaxValueForSlider(), callback_trackbar_DisplayWindowSize, &image);
-    
+    createTrackbar(thresholdLow.name, "Control Window", &thresholdLow.selectedValue, displayWindowSize.getMaxValueForSlider(), callback_trackbar_ThresholdLow, &image);
+    createTrackbar(thresholdHigh.name, "Control Window", &thresholdHigh.selectedValue, thresholdHigh.getMaxValueForSlider(), callback_trackbar_ThresholdHigh, &image);
+
     if(testMode) {
         image = imread("Eisbaer.jpg", IMREAD_COLOR);
         colsImageStart = image.cols;
@@ -92,7 +102,15 @@ int main(int argc, char** argv) {
     } else {
         vector<vector<Point>> squares;
 
+
+        // 2 für USB, -1 für Intern
         VideoCapture cap(-1);
+
+        cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+        cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+        // **** TODO DORT WIEDER HINMACHEN **** //
+        //cap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+        //cap.set(CAP_PROP_FPS, 60);
 
         cap >> image;
         colsImageStart = image.cols;
@@ -109,9 +127,12 @@ int main(int argc, char** argv) {
             cap >> image;
             resize(image, image, cv::Size(), (100-displayWindowSize.getValue())/100.0, (100-displayWindowSize.getValue())/100.0);
             cvtColor(image, imageGray, COLOR_BGR2GRAY);
-            if(thresholdModeBool) threshold(imageGray, imageGray, 80, 255, THRESH_BINARY);
+            if(thresholdModeBool) threshold(imageGray, imageGray, thresholdLow.getValue(), thresholdHigh.getValue(), THRESH_BINARY);
             imageBlurred = getBlurred(imageGray);
             imageCanny = getCanny(imageBlurred);
+
+            findSquares(imageCanny, squares);
+            drawSquares(image, squares);
 
             end = clock();
 
@@ -122,10 +143,10 @@ int main(int argc, char** argv) {
             putText(image, "MAX FPS: " + to_string(CAP_PROP_FPS), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
             putText(image, "FPS: " + to_string(fpsLive), {50, image.rows-50}, FONT_HERSHEY_COMPLEX, 1.5, Scalar(153, 153, 0), 2);
 
-            imshow("Normal Image", imageGray);
+            imshow("Normal Image", image);
             imshow("Canny Image", imageCanny);
 
-            waitKey(10);
+            waitKey(500);
         }
     }
     return 0;
@@ -161,14 +182,14 @@ void callback_trackbar_BlurSize(int blurKernelValue, void* userData) {
     refresh();
 }
 
-void callback_trackbar_ThresholdLow(int cannyLow, void* userData) {
+void callback_trackbar_ThresholdCannyLow(int cannyLow, void* userData) {
     Mat m = *(static_cast<Mat*>(userData));
     imageCanny = getCanny(m);
     //imshow("Canny Image", imageCanny);
     refresh();
 }
 
-void callback_trackbar_ThresholdHigh(int cannyHigh, void* userData) {
+void callback_trackbar_ThresholdCannyHigh(int cannyHigh, void* userData) {
     Mat m = *(static_cast<Mat*>(userData));
     imageCanny = getCanny(m);
     refresh();
@@ -189,6 +210,16 @@ void callback_trackbar_DisplayWindowSize(int WindowSize, void* userData) {
     //cout << displayWindowSize.getValue() << endl;
     resize(m, m, cv::Size(), (100-displayWindowSize.getValue())/100.0, (100-displayWindowSize.getValue())/100.0);
     imshow("Normal Image", m);
+}
+
+void callback_trackbar_ThresholdLow(int cannyLow, void* userData) {
+    Mat m = *(static_cast<Mat*>(userData));
+    refresh();
+}
+
+void callback_trackbar_ThresholdHigh(int cannyHigh, void* userData) {
+    Mat m = *(static_cast<Mat*>(userData));
+    refresh();
 }
 
 Mat getCanny(Mat& original) {
