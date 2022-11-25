@@ -18,7 +18,11 @@ using namespace std;
 int blurModeGaussian = 0;
 int thresholdModeBool = 0;
 
+vector<Point> corners;
+
 const bool testMode = false;
+
+bool warpMode = true;
 /*
 int blurSizeKernel;                 //
 int cannyThresholdLow = 30;         //Range 0 to 30
@@ -76,8 +80,15 @@ int main(int argc, char** argv) {
     createTrackbar(cannyLow.name, "Control Window", &cannyLow.selectedValue, cannyLow.getMaxValueForSlider(), callback_trackbar_ThresholdCannyLow, &imageBlurred);
     createTrackbar(cannyHigh.name, "Control Window", &cannyHigh.selectedValue, cannyHigh.getMaxValueForSlider(), callback_trackbar_ThresholdCannyHigh, &imageBlurred);
     createTrackbar(displayWindowSize.name, "Control Window", &displayWindowSize.selectedValue, displayWindowSize.getMaxValueForSlider(), callback_trackbar_DisplayWindowSize, &image);
-    createTrackbar(thresholdLow.name, "Control Window", &thresholdLow.selectedValue, displayWindowSize.getMaxValueForSlider(), callback_trackbar_ThresholdLow, &image);
+    createTrackbar(thresholdLow.name, "Control Window", &thresholdLow.selectedValue, thresholdLow.getMaxValueForSlider(), callback_trackbar_ThresholdLow, &image);
     createTrackbar(thresholdHigh.name, "Control Window", &thresholdHigh.selectedValue, thresholdHigh.getMaxValueForSlider(), callback_trackbar_ThresholdHigh, &image);
+
+    /********TESTING WARP***********/
+    namedWindow("warped", 0);
+    Point2f cornersFloat[4];
+    Point2f destCorners[4] = {Point(0,0), Point(640, 0), Point(640, 480), Point(0, 480)};
+    Mat outputWarped;
+    Mat warpMat;
 
     if(testMode) {
         image = imread("Eisbaer.jpg", IMREAD_COLOR);
@@ -100,11 +111,14 @@ int main(int argc, char** argv) {
 
         waitKey(0);
     } else {
-        vector<vector<Point>> squares;
-
+        //vector<vector<Point>> squares;
+        corners.push_back(Point(320, 240));
+        corners.push_back(Point(320, 240));
+        corners.push_back(Point(400, 120));
+        corners.push_back(Point(200, 120));
 
         // 2 für USB, -1 für Intern
-        VideoCapture cap(-1);
+        VideoCapture cap(2);
 
         cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
@@ -131,10 +145,11 @@ int main(int argc, char** argv) {
             imageBlurred = getBlurred(imageGray);
             imageCanny = getCanny(imageBlurred);
 
-            findSquares(imageCanny, image, squares);
+            findSquares(imageCanny, image, corners);
             //drawSquares(image, squares);
 
             end = clock();
+ 
 
             msBetweenFrames = (double(end) - double(start)) / double(CLOCKS_PER_SEC);
             fpsLive = double(numFrames) / double(msBetweenFrames);
@@ -143,10 +158,47 @@ int main(int argc, char** argv) {
             putText(image, "MAX FPS: " + to_string(CAP_PROP_FPS), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
             putText(image, "FPS: " + to_string(fpsLive), {50, image.rows-50}, FONT_HERSHEY_COMPLEX, 1.5, Scalar(153, 153, 0), 2);
 
+            //FOR DETECTING AND SHOWING CORNERPOINTS
+            
+            for(auto i : corners) {
+                //cout << i << "      ";
+                drawPoint(image, i, 5);
+            }
+            //cout << "" << endl;
+            //*/ 
+
+           if(warpMode) {
+            if(corners.at(0).y < corners.at(1).y) {
+                cornersFloat[0] = corners.at(0);
+                cornersFloat[3] = corners.at(1);
+            } else {  
+                cornersFloat[3] = corners.at(0);
+                cornersFloat[0] = corners.at(1);
+            }
+            if(corners.at(2).y > corners.at(3).y) {
+                cornersFloat[1] = corners.at(2);
+                cornersFloat[2] = corners.at(3);
+            } else {
+                cornersFloat[2] = corners.at(2);
+                cornersFloat[1] = corners.at(3);
+            }
+ 
+            
+            //warpMat = getPerspectiveTransform(cornersFloat, destCorners);
+            //warpPerspective(image, outputWarped, warpMat, cv::Size(640, 480));
+            
+           warpMat = getAffineTransform(cornersFloat, destCorners);
+           warpAffine(image, outputWarped, warpMat, Size(640, 640));
+
+            imshow("warped", outputWarped);   
+           }
+
             imshow("Normal Image", image);
             imshow("Canny Image", imageCanny);
 
-            waitKey(10);
+
+
+            waitKey(0);
         }
     }
     return 0;
@@ -157,6 +209,7 @@ int main(int argc, char** argv) {
 void callback_trackbar_thresholdMode(int mode, void* userData) {
     Mat m = *(static_cast<Mat*>(userData));
     thresholdModeBool = !thresholdModeBool;
+    warpMode = true;
     cout << "Button Pressed " << thresholdModeBool << endl;
 }
 
