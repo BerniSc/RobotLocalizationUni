@@ -85,8 +85,16 @@ int main(int argc, char** argv) {
 
     /********TESTING WARP***********/
     namedWindow("warped", 0);
+    int destWidth = 700;
+    int destHeight = 400;
     Point2f cornersFloat[4];
-    Point2f destCorners[4] = {Point(0,0), Point(640, 0), Point(640, 480), Point(0, 480)};
+    //PROBLEM -> Festlegung zwischen Affine Transformation (weniger rechenintensiv + beibehaltung Parallelität) oder Perspective Transform (mächtiger)
+    //Affine benötigt 3 Punkte -> Falls verdreht evtl Reihnfolge der Punkt tauschen i.E. Punkt 0 an schluss verschieben oder so) -> Reinfolge der Erkennung
+    //Evlt auch mit slidern o.ä. regeln
+    //Sobald tatsächlichen Kameraaufbau genauere Anpassung der Vergleichspunkte (Startpunkte) für "Corners" und reihnfolge destCorners mgl da wahl der Transformation möglich
+    
+    //Ansatzpunkt für Michael aus outPut Warped Kreiserkennung ortung möglich -> evlt auch nicht image warpen sondern Canny o.ä. -> Algorithmus bereits gelaufen -> FPS schon bei flüssig min 30
+    Point2f destCorners[4] = {Point(0, 0), Point(destWidth, 0), Point(destWidth, destHeight), Point(0, destHeight)};
     Mat outputWarped;
     Mat warpMat;
 
@@ -112,8 +120,9 @@ int main(int argc, char** argv) {
         waitKey(0);
     } else {
         //vector<vector<Point>> squares;
-        corners.push_back(Point(320, 240));
-        corners.push_back(Point(320, 240));
+        //FALLS DICKE PUNKTE (Warp Punkte nicht richtig erkannt werden hier Vergleichswerte entsprechend anpassen)
+        corners.push_back(Point(300, 120));
+        corners.push_back(Point(320, 240)); 
         corners.push_back(Point(400, 120));
         corners.push_back(Point(200, 120));
 
@@ -148,12 +157,6 @@ int main(int argc, char** argv) {
             findSquares(imageCanny, image, corners);
             //drawSquares(image, squares);
 
-            end = clock();
- 
-
-            msBetweenFrames = (double(end) - double(start)) / double(CLOCKS_PER_SEC);
-            fpsLive = double(numFrames) / double(msBetweenFrames);
-
             //COLOR changedby Scalar -> Order is B-G-R
             putText(image, "MAX FPS: " + to_string(CAP_PROP_FPS), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
             putText(image, "FPS: " + to_string(fpsLive), {50, image.rows-50}, FONT_HERSHEY_COMPLEX, 1.5, Scalar(153, 153, 0), 2);
@@ -184,21 +187,27 @@ int main(int argc, char** argv) {
             }
  
             
-            //warpMat = getPerspectiveTransform(cornersFloat, destCorners);
-            //warpPerspective(image, outputWarped, warpMat, cv::Size(640, 480));
+            warpMat = getPerspectiveTransform(cornersFloat, destCorners);
+            warpPerspective(image, outputWarped, warpMat, cv::Size(640, 480));
             
-           warpMat = getAffineTransform(cornersFloat, destCorners);
-           warpAffine(image, outputWarped, warpMat, Size(640, 640));
+           //warpMat = getAffineTransform(cornersFloat, destCorners);
+           //warpAffine(image, outputWarped, warpMat, Size(destWidth, destHeight));
 
             imshow("warped", outputWarped);   
            }
+
+                       end = clock();
+ 
+
+            msBetweenFrames = (double(end) - double(start)) / double(CLOCKS_PER_SEC);
+            fpsLive = double(numFrames) / double(msBetweenFrames);
 
             imshow("Normal Image", image);
             imshow("Canny Image", imageCanny);
 
 
 
-            waitKey(0);
+            waitKey(10);
         }
     }
     return 0;
