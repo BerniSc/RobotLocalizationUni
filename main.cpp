@@ -6,6 +6,7 @@
 #include "control_window_params.hpp"
 #include "image_collection.hpp"
 #include "square_detection.hpp"
+#include "circle_detection.hpp"
 
 #include <opencv2/video.hpp>
 #include "opencv2/imgcodecs.hpp"
@@ -13,7 +14,6 @@
 
 using namespace cv;
 using namespace std;
-
 
 int blurModeGaussian = 0;
 int thresholdModeBool = 0;
@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
         corners.push_back(Point(200, 120));
 
         // 2 für USB, -1 für Intern
-        VideoCapture cap(2);
+        VideoCapture cap(-1);
 
         cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
@@ -144,7 +144,7 @@ int main(int argc, char** argv) {
         int numFrames = 1;
         double msBetweenFrames, fpsLive;
 
-        while(1) { 
+        while(1) {
             start = clock();
 
             cap >> image;
@@ -187,18 +187,21 @@ int main(int argc, char** argv) {
             }
  
             
+            imshow("Image Canny C", imageCanny); 
             warpMat = getPerspectiveTransform(cornersFloat, destCorners);
             warpPerspective(image, outputWarped, warpMat, cv::Size(640, 480));
             
            //warpMat = getAffineTransform(cornersFloat, destCorners);
            //warpAffine(image, outputWarped, warpMat, Size(destWidth, destHeight));
 
+            vector<Vec3f> circles = findCircles(imageCanny, image);
+            drawCircles(image , circles);
+
             imshow("warped", outputWarped);   
            }
 
                        end = clock();
  
-
             msBetweenFrames = (double(end) - double(start)) / double(CLOCKS_PER_SEC);
             fpsLive = double(numFrames) / double(msBetweenFrames);
 
