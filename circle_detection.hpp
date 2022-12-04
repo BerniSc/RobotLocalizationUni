@@ -6,8 +6,10 @@
 
 #include <stdio.h>
 
-const int diameterStart = 15;
-const int diameterEnd = 25;
+//const int diameterStart = 15;
+const int diameterStart = 20;
+//const int diameterEnd = 25;
+const int diameterEnd = 100;
 
 void drawCircles(cv::Mat &input, const std::vector<cv::Vec3f> &circles) {
    for (int i = 0; i < circles.size(); i++) //Drawing the circles
@@ -27,7 +29,8 @@ void drawCircles(cv::Mat &input, const std::vector<cv::Vec3f> &circles) {
 std::vector<cv::Vec3f> findCircles(cv::Mat &input, cv::Mat &inputDrawOn) {
     std::vector<cv::Vec3f> circles;
 
-    cv::HoughCircles(input, circles, cv::HOUGH_GRADIENT, 1, input.rows / 16, 100, 30, diameterStart, diameterEnd);
+    //cv::HoughCircles(input, circles, cv::HOUGH_GRADIENT, 1, input.rows / 16, 100, 30, diameterStart, diameterEnd);
+    cv::HoughCircles(input, circles, cv::HOUGH_GRADIENT, 1, input.rows / 16, 100, 33, diameterStart, diameterEnd);
 
     drawCircles(inputDrawOn, circles);
 

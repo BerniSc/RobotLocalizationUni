@@ -40,6 +40,7 @@ parameterDescription resizeSize(0, 50, 0, "Window Size (in %)");
 parameterDescription displayWindowSize(0, 50, 0, "Displaywindow Size (in %)");
 parameterDescription thresholdLow(0,255, 80, "Lower Threshold Value");
 parameterDescription thresholdHigh(0, 255, 255, "Higher Threshold Value");
+parameterDescription squareDetection(0, 1, 1, "Square Detection (Calib. Mode)");
 
 /***/
 void callback_trackbar_thresholdMode(int mode, void* userData);
@@ -51,6 +52,7 @@ void callback_trackbar_WindowSize(int WindowSize, void* userData);
 void callback_trackbar_DisplayWindowSize(int WindowSize, void* userData);
 void callback_trackbar_ThresholdLow(int cannyLow, void* userData);
 void callback_trackbar_ThresholdHigh(int cannyLow, void* userData);
+void callback_trackbar_squareDetection(int mode, void *userData);
 
 void refresh();
 
@@ -82,11 +84,12 @@ int main(int argc, char** argv) {
     createTrackbar(displayWindowSize.name, "Control Window", &displayWindowSize.selectedValue, displayWindowSize.getMaxValueForSlider(), callback_trackbar_DisplayWindowSize, &image);
     createTrackbar(thresholdLow.name, "Control Window", &thresholdLow.selectedValue, thresholdLow.getMaxValueForSlider(), callback_trackbar_ThresholdLow, &image);
     createTrackbar(thresholdHigh.name, "Control Window", &thresholdHigh.selectedValue, thresholdHigh.getMaxValueForSlider(), callback_trackbar_ThresholdHigh, &image);
+    createTrackbar(squareDetection.name, "Control Window", &squareDetection.selectedValue, squareDetection.getMaxValueForSlider(), callback_trackbar_squareDetection, &image);
 
     /********TESTING WARP***********/
     namedWindow("warped", 0);
-    int destWidth = 700;
-    int destHeight = 400;
+    int destWidth = 440;
+    int destHeight = 440;
     Point2f cornersFloat[4];
     //PROBLEM -> Festlegung zwischen Affine Transformation (weniger rechenintensiv + beibehaltung Parallelität) oder Perspective Transform (mächtiger)
     //Affine benötigt 3 Punkte -> Falls verdreht evtl Reihnfolge der Punkt tauschen i.E. Punkt 0 an schluss verschieben oder so) -> Reinfolge der Erkennung
@@ -94,7 +97,7 @@ int main(int argc, char** argv) {
     //Sobald tatsächlichen Kameraaufbau genauere Anpassung der Vergleichspunkte (Startpunkte) für "Corners" und reihnfolge destCorners mgl da wahl der Transformation möglich
     
     //Ansatzpunkt für Michael aus outPut Warped Kreiserkennung ortung möglich -> evlt auch nicht image warpen sondern Canny o.ä. -> Algorithmus bereits gelaufen -> FPS schon bei flüssig min 30
-    Point2f destCorners[4] = {Point(0, 0), Point(destWidth, 0), Point(destWidth, destHeight), Point(0, destHeight)};
+    Point2f destCorners[4] = {Point(0, 0), Point(0, destHeight), Point(destWidth, destHeight), Point(destWidth, 0)};
     Mat outputWarped;
     Mat warpMat;
 
@@ -127,7 +130,7 @@ int main(int argc, char** argv) {
         corners.push_back(Point(200, 120));
 
         // 2 für USB, -1 für Intern
-        VideoCapture cap(-1);
+        VideoCapture cap(2);
 
         cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
@@ -154,7 +157,7 @@ int main(int argc, char** argv) {
             imageBlurred = getBlurred(imageGray);
             imageCanny = getCanny(imageBlurred);
 
-            findSquares(imageCanny, image, corners);
+            if(squareDetection.getValue()) findSquares(imageCanny, image, corners);
             //drawSquares(image, squares);
 
             //COLOR changedby Scalar -> Order is B-G-R
@@ -186,16 +189,23 @@ int main(int argc, char** argv) {
                 cornersFloat[1] = corners.at(3);
             }
  
-            
-            imshow("Image Canny C", imageCanny); 
-            warpMat = getPerspectiveTransform(cornersFloat, destCorners);
-            warpPerspective(image, outputWarped, warpMat, cv::Size(640, 480));
-            
-           //warpMat = getAffineTransform(cornersFloat, destCorners);
-           //warpAffine(image, outputWarped, warpMat, Size(destWidth, destHeight));
+            //cout << cornersFloat[0] << "    " << cornersFloat[1] << "   " << cornersFloat[2] << "   " << cornersFloat[3] << endl;
 
-            vector<Vec3f> circles = findCircles(imageCanny, image);
-            drawCircles(image , circles);
+            //imshow("Image Canny C", imageCanny); 
+            //warpMat = getPerspectiveTransform(cornersFloat, destCorners);
+            //warpPerspective(image, outputWarped, warpMat, cv::Size(640, 480));
+            
+            warpMat = getAffineTransform(cornersFloat, destCorners);
+            //FOR DISPLAY PUROPOSES
+            //warpAffine(image, outputWarped, warpMat, Size(destWidth, destHeight));
+            warpAffine(imageGray, outputWarped, warpMat, Size(destWidth, destHeight));
+
+            if(!squareDetection.getValue()) {
+                //vector<Vec3f> circles = findCircles(imageCanny, image);
+                vector<Vec3f> circles = findCircles(outputWarped, outputWarped);
+                //cout << outputWarped.rows - imageCanny.rows << "      " << outputWarped.cols - imageCanny.cols << " " << outputWarped.empty() + imageCanny.empty() << endl;
+                //drawCircles(image , circles);
+            }
 
             imshow("warped", outputWarped);   
            }
@@ -285,6 +295,13 @@ void callback_trackbar_ThresholdLow(int cannyLow, void* userData) {
 void callback_trackbar_ThresholdHigh(int cannyHigh, void* userData) {
     Mat m = *(static_cast<Mat*>(userData));
     refresh();
+}
+
+void callback_trackbar_squareDetection(int mode, void *userData) {
+    Mat m = *(static_cast<Mat *>(userData));
+    //mode = !thresholdModeBool;
+    //warpMode = true;
+    cout << "Button Pressed " << thresholdModeBool << endl;
 }
 
 Mat getCanny(Mat& original) {
