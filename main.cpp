@@ -41,6 +41,8 @@ parameterDescription displayWindowSize(0, 50, 0, "Displaywindow Size (in %)");
 parameterDescription thresholdLow(0,255, 80, "Lower Threshold Value");
 parameterDescription thresholdHigh(0, 255, 255, "Higher Threshold Value");
 parameterDescription squareDetection(0, 1, 1, "Square Detection (Calib. Mode)");
+parameterDescription cricleDetection(0, 1, 1, "Clear Gray Circledetection Mode");
+parameterDescription displayMode(0, 1, 1, "Display Mode");
 
 /***/
 void callback_trackbar_thresholdMode(int mode, void* userData);
@@ -53,6 +55,8 @@ void callback_trackbar_DisplayWindowSize(int WindowSize, void* userData);
 void callback_trackbar_ThresholdLow(int cannyLow, void* userData);
 void callback_trackbar_ThresholdHigh(int cannyLow, void* userData);
 void callback_trackbar_squareDetection(int mode, void *userData);
+void callback_trackbar_circleDetection(int mode, void *userData);
+void callback_trackbar_displayMode(int mode, void *userData);
 
 void refresh();
 
@@ -65,6 +69,8 @@ Mat image;
 Mat imageGray;
 Mat imageBlurred;
 Mat imageCanny;
+
+Mat imageBlurredGray;
 //TODO ADD THRESHHOLD SLIDERS
 int main(int argc, char** argv) {
     namedWindow("Control Window", WINDOW_AUTOSIZE);
@@ -76,7 +82,7 @@ int main(int argc, char** argv) {
     }
     
     createTrackbar(thresholdMode.name, "Control Window", &thresholdMode.selectedValue, thresholdMode.getMaxValueForSlider(), callback_trackbar_thresholdMode, &image);
-    createTrackbar(resizeSize.name, "Control Window", &resizeSize.selectedValue, resizeSize.getMaxValueForSlider(), callback_trackbar_WindowSize, &imageGray);
+    if(testMode) createTrackbar(resizeSize.name, "Control Window", &resizeSize.selectedValue, resizeSize.getMaxValueForSlider(), callback_trackbar_WindowSize, &imageGray);
     createTrackbar(blurMode.name, "Control Window", &blurMode.selectedValue, blurMode.getMaxValueForSlider(), callback_trackbar_BlurMode, &image);
     createTrackbar(blurSize.name, "Control Window", &blurSize.selectedValue, blurSize.getMaxValueForSlider(), callback_trackbar_BlurSize, &image);
     createTrackbar(cannyLow.name, "Control Window", &cannyLow.selectedValue, cannyLow.getMaxValueForSlider(), callback_trackbar_ThresholdCannyLow, &imageBlurred);
@@ -85,6 +91,7 @@ int main(int argc, char** argv) {
     createTrackbar(thresholdLow.name, "Control Window", &thresholdLow.selectedValue, thresholdLow.getMaxValueForSlider(), callback_trackbar_ThresholdLow, &image);
     createTrackbar(thresholdHigh.name, "Control Window", &thresholdHigh.selectedValue, thresholdHigh.getMaxValueForSlider(), callback_trackbar_ThresholdHigh, &image);
     createTrackbar(squareDetection.name, "Control Window", &squareDetection.selectedValue, squareDetection.getMaxValueForSlider(), callback_trackbar_squareDetection, &image);
+    createTrackbar(displayMode.name, "Control Window", &displayMode.selectedValue, displayMode.getMaxValueForSlider(), callback_trackbar_displayMode, &image);
 
     /********TESTING WARP***********/
     namedWindow("warped", 0);
@@ -118,6 +125,8 @@ int main(int argc, char** argv) {
         imageBlurred = getBlurred(image);
         imageCanny = getCanny(imageBlurred);
         
+        imageBlurredGray = getBlurred(imageGray);
+
         refresh();
 
         waitKey(0);
@@ -156,6 +165,8 @@ int main(int argc, char** argv) {
             if(thresholdModeBool) threshold(imageGray, imageGray, thresholdLow.getValue(), thresholdHigh.getValue(), THRESH_BINARY);
             imageBlurred = getBlurred(imageGray);
             imageCanny = getCanny(imageBlurred);
+
+            imageBlurredGray = getBlurred(imageGray);
 
             if(squareDetection.getValue()) findSquares(imageCanny, image, corners);
             //drawSquares(image, squares);
@@ -198,7 +209,11 @@ int main(int argc, char** argv) {
             warpMat = getAffineTransform(cornersFloat, destCorners);
             //FOR DISPLAY PUROPOSES
             //warpAffine(image, outputWarped, warpMat, Size(destWidth, destHeight));
-            warpAffine(imageGray, outputWarped, warpMat, Size(destWidth, destHeight));
+            if(cricleDetection.getValue()) {
+                warpAffine(imageGray, outputWarped, warpMat, Size(destWidth, destHeight));
+            } else {
+                warpAffine(imageBlurredGray, outputWarped, warpMat, Size(destWidth, destHeight));
+            }
 
             if(!squareDetection.getValue()) {
                 //vector<Vec3f> circles = findCircles(imageCanny, image);
@@ -207,7 +222,7 @@ int main(int argc, char** argv) {
                 //drawCircles(image , circles);
             }
 
-            imshow("warped", outputWarped);   
+            if(displayMode.getValue()) imshow("warped", outputWarped);   
            }
 
                        end = clock();
@@ -215,10 +230,11 @@ int main(int argc, char** argv) {
             msBetweenFrames = (double(end) - double(start)) / double(CLOCKS_PER_SEC);
             fpsLive = double(numFrames) / double(msBetweenFrames);
 
-            imshow("Normal Image", image);
-            imshow("Canny Image", imageCanny);
+            if(displayMode.getValue()) imshow("Normal Image", image);
+            if(displayMode.getValue()) imshow("Canny Image", imageCanny);
 
 
+            if(!squareDetection.getValue()) createTrackbar(cricleDetection.name, "Control Window", &cricleDetection.selectedValue, cricleDetection.getMaxValueForSlider(), callback_trackbar_circleDetection, &image);
 
             waitKey(10);
         }
@@ -299,9 +315,14 @@ void callback_trackbar_ThresholdHigh(int cannyHigh, void* userData) {
 
 void callback_trackbar_squareDetection(int mode, void *userData) {
     Mat m = *(static_cast<Mat *>(userData));
-    //mode = !thresholdModeBool;
-    //warpMode = true;
-    cout << "Button Pressed " << thresholdModeBool << endl;
+}
+
+void callback_trackbar_circleDetection(int mode, void *userData) {
+    Mat m = *(static_cast<Mat *>(userData));
+}
+
+void callback_trackbar_displayMode(int mode, void *userData) {
+    Mat m = *(static_cast<Mat *>(userData));
 }
 
 Mat getCanny(Mat& original) {
