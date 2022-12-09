@@ -77,24 +77,27 @@ void findSquares(const cv::Mat &imageCanny, cv::Mat &imageToDrawOn, std::vector<
                 drawSquares(imageToDrawOn, approx);
                 
                 sort(approx.begin(), approx.end(), sortByXAxis);
+                sort(corners.begin(), corners.end(), sortByXAxis);
 
                 cv::Point center(0, 0);
 
                 center.x = (approx[3].x - approx[0].x) / 2 + approx[0].x;
                 center.y = (approx[1].y - approx[0].y) / 2 + approx[0].y;
                 
-                if(center.x < corners.at(0).x && center.y < corners.at(0).y) {
+                //if(center.y > 200) corners.at(1) = center;
+                //if(center.y < 180 && center.x < corners.at(2).x) corners.at(0) = center;
+                if(center.x < corners.at(0).x && center.y < 220) {
                     corners.at(0) = center;
                     //std::cout << center << "     " << corners.at(0) << std::endl;
-                }
-                if(center.x > corners.at(1).x && center.y < corners.at(1).y) {
+                } else 
+                if(center.x < corners.at(1).x && center.y > corners.at(1).y) {
                     corners.at(1) = center;
                     //std::cout << center << "     " << corners.at(1) << std::endl;
                 }
-                if(center.x < corners.at(2).x && center.y > corners.at(2).y) {
+                if(center.x > corners.at(2).x) {
                     corners.at(2) = center;
                 }
-                if(center.x > corners.at(3).x && center.y > corners.at(3).y) corners.at(3) = center;
+                //if(center.x > corners.at(3).x && center.y > corners.at(3).y) corners.at(3) = center;
 
                 //drawPoint(imageToDrawOn, center);
             }

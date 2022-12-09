@@ -1,6 +1,6 @@
-CC = "g++"
+CC = g++
 PROJECT = output
-SRC = main.cpp
+SRC = main.cpp control_window_params.cpp callback_functions.cpp utility.cpp
 
 LIBS = `pkg-config --cflags --libs opencv4`
 $(PROJECT) : $(SRC)
