@@ -4,7 +4,6 @@
 #include <iostream>
 
 #include "control_window_params.hpp"
-#include "image_collection.hpp"
 #include "square_detection.hpp"
 #include "circle_detection.hpp"
 
