@@ -71,6 +71,8 @@ Mat imageBlurred;
 Mat imageCanny;
 
 Mat imageBlurredGray;
+
+Mat dataImage = Mat::zeros(Size(400,400), CV_8UC1);
 //TODO ADD THRESHHOLD SLIDERS
 int main(int argc, char** argv) {
     namedWindow("Control Window", WINDOW_AUTOSIZE);
@@ -139,7 +141,7 @@ int main(int argc, char** argv) {
         corners.push_back(Point(200, 120));
 
         // 2 für USB, -1 für Intern
-        VideoCapture cap(2);
+        VideoCapture cap(-1);
 
         cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
         cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
@@ -175,6 +177,9 @@ int main(int argc, char** argv) {
             putText(image, "MAX FPS: " + to_string(CAP_PROP_FPS), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
             putText(image, "FPS: " + to_string(fpsLive), {50, image.rows-50}, FONT_HERSHEY_COMPLEX, 1.5, Scalar(153, 153, 0), 2);
 
+            putText(dataImage, "MAX FPS: " + to_string(fpsLive), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 2);
+            //cout << "\r" << fpsLive;
+
             //FOR DETECTING AND SHOWING CORNERPOINTS
             
             for(auto i : corners) {
@@ -202,7 +207,6 @@ int main(int argc, char** argv) {
  
             //cout << cornersFloat[0] << "    " << cornersFloat[1] << "   " << cornersFloat[2] << "   " << cornersFloat[3] << endl;
 
-            //imshow("Image Canny C", imageCanny); 
             //warpMat = getPerspectiveTransform(cornersFloat, destCorners);
             //warpPerspective(image, outputWarped, warpMat, cv::Size(640, 480));
             
@@ -218,6 +222,9 @@ int main(int argc, char** argv) {
             if(!squareDetection.getValue()) {
                 //vector<Vec3f> circles = findCircles(imageCanny, image);
                 vector<Vec3f> circles = findCircles(outputWarped, outputWarped);
+                int x = circles[0][0];
+                int y = circles[0][1];
+                putText(dataImage, "Robot 1: " + to_string(x) + " " + to_string(y), {25, 130}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
                 //cout << outputWarped.rows - imageCanny.rows << "      " << outputWarped.cols - imageCanny.cols << " " << outputWarped.empty() + imageCanny.empty() << endl;
                 //drawCircles(image , circles);
             }
@@ -232,9 +239,12 @@ int main(int argc, char** argv) {
 
             if(displayMode.getValue()) imshow("Normal Image", image);
             if(displayMode.getValue()) imshow("Canny Image", imageCanny);
+            imshow("Data Window", dataImage);
 
 
             if(!squareDetection.getValue()) createTrackbar(cricleDetection.name, "Control Window", &cricleDetection.selectedValue, cricleDetection.getMaxValueForSlider(), callback_trackbar_circleDetection, &image);
+
+            dataImage = Mat::zeros(Size(400,400), CV_8UC1);
 
             waitKey(10);
         }

@@ -22,7 +22,7 @@ void drawCircles(cv::Mat &input, const std::vector<cv::Vec3f> &circles) {
         int radius = c[2];
         circle(input, center, radius, cv::Scalar(255, 0, 255), 3, cv::LINE_AA);
 
-        std::cout << "Drew Point at " << center << " with r=" << radius << "    Lenght:" << circles.size() <<std::endl;
+        //std::cout << "Drew Point at " << center << " with r=" << radius << "    Lenght:" << circles.size() <<std::endl;
     }
 }
 
