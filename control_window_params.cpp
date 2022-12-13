@@ -7,9 +7,27 @@ void parameterController::addParam(parameterDescription* param) {
 void parameterController::printCurrentConfig() {
     std::cout << "-----===== Your Current Config =====-----" << std::endl;
     for(auto descriptor : parameterController::descriptors) {
-        std::cout << descriptor->name << "  " << descriptor->getValue() << std::endl;
+        std::cout << descriptor->name << " # " << descriptor->getValue() << std::endl;
     }
     std::cout << "_________________________________________" << std::endl;
+}
+
+void parameterController::loadConfig(int configNr) {
+    std::cout << "Loading Config " << configNr << " as current Config!" << std::endl;
+    std::vector<std::vector<std::string>> configData;
+    readInData("param_config.pacf", configData);
+    
+    if(configNr < 0 || configNr > 9 || (configData.size() < (configNr+1))) {
+        std::cerr << "\n\tAn Error occured during loading of the Config!!\n\t Please Try Again!!" << std::endl; 
+        return;
+    }
+
+    std::vector<std::string> singleConfig = configData[configNr];
+
+    for(int i = 1; i < singleConfig.size() - 1; i++) {
+        std::vector<std::string> seperatedData = seperateString(singleConfig[i], "#");
+        descriptors[i-1]->selectedValue = std::stoi(seperatedData[1]);
+    }
 }
 
 void parameterController::createTrackbars() {

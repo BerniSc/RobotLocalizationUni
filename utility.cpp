@@ -1,12 +1,15 @@
 #include "utility.hpp"
 
 cv::Mat getCanny(cv::Mat& original, parameterDescription &lowerThreshold, parameterDescription &higherThreshold) {
+    //std::cout << std::endl << "           " << lowerThreshold.getValue() << "   " << higherThreshold.getValue() << std::endl;
     cv::Mat imageCanny;
     cv::Canny(original, imageCanny, lowerThreshold.getValue(), higherThreshold.getValue()); 
     return imageCanny;
 }
 
 cv::Mat getBlurred(cv::Mat& original, parameterDescription &blurMode, parameterDescription &blurSize) {
+    //std::cout << std::endl << "           " << blurSize.getValue() << std::endl;
+    if(!(blurSize.getValue()%2)) return original;
     cv::Mat blurred;
     if(blurMode.getValue()) {
         cv::GaussianBlur(original, blurred, cv::Size(blurSize.getValue(), blurSize.getValue()), 0, 0);
@@ -14,4 +17,52 @@ cv::Mat getBlurred(cv::Mat& original, parameterDescription &blurMode, parameterD
         cv::medianBlur(original, blurred, blurSize.getValue());
     }
     return blurred;
+}
+
+void readInData(const std::string& fileName, std::vector<std::vector<std::string>> &dataDestination) {
+    std::ifstream myFile;
+    myFile.open(fileName);
+
+    std::string inputData;
+
+    std::vector<std::string> paragraph;
+    if(myFile.is_open()) {
+        while(myFile) {
+            if(myFile.eof()) inputData = "";
+            std::getline(myFile, inputData);
+            if(inputData != "") {
+                paragraph.push_back(inputData);
+            } else {
+                dataDestination.push_back(paragraph);
+                paragraph.clear();
+            }
+        }
+    }
+}
+
+std::vector<std::string>& seperateString(std::string toSeperate, const char *seperator) {
+    static std::vector<std::string> result;
+    result.clear();
+    char* dataAsPointer = &toSeperate[0];
+    char* token = strtok(dataAsPointer, seperator);
+    result.push_back(token);
+    
+    while(token != NULL) {
+        token = strtok(NULL, seperator);
+        if(token != NULL) result.push_back(token);
+    }
+    
+    return result;
+}
+
+void drawPoint(cv::Mat &image, const cv::Point &point, int sizeAdd) {
+    circle(image, point, 1, cv::Scalar(0, 255, 0), 3+sizeAdd, cv::LINE_AA);
+}
+
+double getAngleRobot(const cv::Point &centerLarge, const cv::Point &centerSmall) {
+    double deltaX = centerLarge.x/1.0 - centerSmall.x;
+    double deltaY = double(centerLarge.y) - centerSmall.y;
+    double angle = std::atan2(deltaY, deltaX);
+    angle *= (180/M_PI);
+    return angle;
 }

@@ -4,6 +4,8 @@
 #include <opencv4/opencv2/imgproc/imgproc.hpp>
 #include <opencv4/opencv2/highgui/highgui.hpp>
 
+#include "utility.hpp"
+
 const float sensitivity = 0.02f;
 
 const int minSizeContour = 1000;
@@ -23,10 +25,6 @@ double angle(cv::Point pt1, cv::Point pt2, cv::Point pt0) {
     double dx2 = pt2.x - pt0.x;
     double dy2 = pt2.y - pt0.y;
     return (dx1 * dx2 + dy1 * dy2) / sqrt((dx1 * dx1 + dy1 * dy1) * (dx2 * dx2 + dy2 * dy2) + 1e-10);
-}
-
-void drawPoint(cv::Mat &image, const cv::Point &point, int sizeAdd = 0) {
-    circle(image, point, 1, cv::Scalar(0, 255, 0), 3+sizeAdd, cv::LINE_AA);
 }
 
 void drawSquares(cv::Mat &image, std::vector<cv::Point> &squares) {
@@ -69,37 +67,24 @@ void findSquares(const cv::Mat &imageCanny, cv::Mat &imageToDrawOn, std::vector<
 
             //Wenn Cos kleiner als 0,3 dann Ecke fast 90°, deswegen Rechteck
             if(maxCosine < 0.3) {
-                //sort(approx.begin(), approx.end(), sortByXAxis);
-                //for(int i = 0; i <= 3; i++) {
-                    //std::cout << "      " << approx.at(i); 
-                //}
-                //std::cout << std::endl;
                 drawSquares(imageToDrawOn, approx);
                 
                 sort(approx.begin(), approx.end(), sortByXAxis);
-                sort(corners.begin(), corners.end(), sortByXAxis);
 
                 cv::Point center(0, 0);
 
                 center.x = (approx[3].x - approx[0].x) / 2 + approx[0].x;
                 center.y = (approx[1].y - approx[0].y) / 2 + approx[0].y;
-                
-                //if(center.y > 200) corners.at(1) = center;
-                //if(center.y < 180 && center.x < corners.at(2).x) corners.at(0) = center;
-                if(center.x < corners.at(0).x && center.y < 220) {
-                    corners.at(0) = center;
-                    //std::cout << center << "     " << corners.at(0) << std::endl;
-                } else 
-                if(center.x < corners.at(1).x && center.y > corners.at(1).y) {
+
+                if(center.x < corners[0].x && center.y < corners[0].y) {
+                    corners[0] = center;
+                } else if(center.x < corners.at(1).x && center.y > corners.at(1).y) {
                     corners.at(1) = center;
-                    //std::cout << center << "     " << corners.at(1) << std::endl;
-                }
-                if(center.x > corners.at(2).x) {
+                } else if(center.x > corners.at(2).x && center.y > corners.at(2).y) {
                     corners.at(2) = center;
                 }
-                //if(center.x > corners.at(3).x && center.y > corners.at(3).y) corners.at(3) = center;
 
-                //drawPoint(imageToDrawOn, center);
+                drawPoint(imageToDrawOn, center, 5);
             }
         }
     }

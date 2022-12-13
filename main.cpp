@@ -16,10 +16,14 @@
 using namespace cv;
 using namespace std;
 
+const int destWidth = 440;
+const int destHeight = 440;
+
+const int inputWidth = 640;
+const int inputHeight = 480;
+
 int blurModeGaussian = 0;
 vector<Point> corners;
-
-bool warpMode = true;
 
 parameterController paramController;
 /**     Descriptors     **/
@@ -65,8 +69,6 @@ int main(int argc, char** argv) {
 
     /********TESTING WARP***********/
     namedWindow("warped", 0);
-    int destWidth = 440;
-    int destHeight = 440;
     Point2f cornersFloat[3];
     
     //Ansatzpunkt für Michael aus outPut Warped Kreiserkennung ortung möglich -> evlt auch nicht image warpen sondern Canny o.ä. -> Algorithmus bereits gelaufen -> FPS schon bei flüssig min 30
@@ -74,16 +76,15 @@ int main(int argc, char** argv) {
     Mat outputWarped;
     Mat warpMat;
 
-    //FALLS DICKE PUNKTE (Warp Punkte nicht richtig erkannt werden hier Vergleichswerte entsprechend anpassen)
-    corners.push_back(Point(320, 120));
-    corners.push_back(Point(320, 210)); 
-    corners.push_back(Point(400, 120));
+    corners.push_back(Point(inputWidth/2, inputHeight/2));
+    corners.push_back(Point(inputWidth/2, inputHeight/2)); 
+    corners.push_back(Point(inputWidth/2, inputHeight/2));
 
     // 2 für USB, -1 für Intern
-    VideoCapture cap(2);
+    VideoCapture cap(-1);
 
-        cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
-        cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+        cap.set(cv::CAP_PROP_FRAME_WIDTH, inputWidth);
+        cap.set(cv::CAP_PROP_FRAME_HEIGHT, inputHeight);
         // **** TODO DORT WIEDER HINMACHEN **** //
         //cap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
         //cap.set(CAP_PROP_FPS, 60);
@@ -98,57 +99,34 @@ int main(int argc, char** argv) {
         double msBetweenFrames, fpsLive;
 
         while(1) {
+            //Start Clock for FPS Counter
             start = clock();
+            //Putting current Camera Image from Camerastream into Image Mat
             cap >> image;
+            //Resising Image Mat
             resize(image, image, cv::Size(), (100-displayWindowSize.getValue())/100.0, (100-displayWindowSize.getValue())/100.0);
+            //Processing resized Image i.e. turing it gray etc 
             cvtColor(image, imageGray, COLOR_BGR2GRAY);
+            //Applying threshold for save in Processingpower if slider is activated
             if(thresholdMode.getValue()) threshold(imageGray, imageGray, thresholdLow.getValue(), thresholdHigh.getValue(), THRESH_BINARY);
+            //TODO -> EVTL auch adaptive Threshhold einfügen, -> 3. Param ist wert auf den gesetzt wird
+            //adaptiveThreshold(imageGray, imageGray, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 11, 12);
+
             imageBlurred = getBlurred(imageGray, blurMode, blurSize);
             imageCanny = getCanny(imageBlurred, cannyLow, cannyHigh);
 
-
-
             imageBlurredGray = getBlurred(imageGray, blurMode, blurSize);
 
-            for(auto i : corners) {
-                cout << i << "      ";
-                drawPoint(image, i, 5);
-            }
-            imshow("Image", image);
-            waitKey(0);
-
+            //When Slider for Calibration Mode is activated Programm tries to find Corners
             if(squareDetection.getValue()) findSquares(imageCanny, image, corners);
-            //drawSquares(image, squares);
 
-            //COLOR changedby Scalar -> Order is B-G-R
+            //COLOR changed by Scalar -> Order is B-G-R
             putText(image, "MAX FPS: " + to_string(CAP_PROP_FPS), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
             putText(image, "FPS: " + to_string(fpsLive), {50, image.rows-50}, FONT_HERSHEY_COMPLEX, 1.5, Scalar(153, 153, 0), 2);
 
-            //FOR DETECTING AND SHOWING CORNERPOINTS
-            
-            for(auto i : corners) {
-                cout << i << "      ";
-                drawPoint(image, i, 5);
-            }
-            cout << "" << endl;
-            //*/ 
-
-           if(warpMode) {
-            if(corners.at(0).y < corners.at(1).y) {
-                cornersFloat[0] = corners.at(0);
-                cornersFloat[1] = corners.at(1);
-            } 
-            if(corners.at(0).y > corners.at(1).y) {
-                cornersFloat[1] = corners.at(0);
-                cornersFloat[0] = corners.at(1);
-            }
+            cornersFloat[0] = corners.at(0);
+            cornersFloat[1] = corners.at(1);
             cornersFloat[2] = corners.at(2);
- 
-            cout << cornersFloat[0] << "    " << cornersFloat[1] << "   " << cornersFloat[2] << "   " << endl;
-
-            //imshow("Image Canny C", imageCanny); 
-            //warpMat = getPerspectiveTransform(cornersFloat, destCorners);
-            //warpPerspective(image, outputWarped, warpMat, cv::Size(640, 480));
             
             warpMat = getAffineTransform(cornersFloat, destCorners);
             //FOR DISPLAY PUROPOSES
@@ -160,14 +138,23 @@ int main(int argc, char** argv) {
             }
 
             if(!squareDetection.getValue()) {
-                //vector<Vec3f> circles = findCircles(imageCanny, image);
-                vector<Vec3f> circles = findCircles(outputWarped, outputWarped);
+                //For Testing -> warped not allways availabe
+                //cout << "Trying find Circles" << endl;
+                //vector<Vec3f> circles = findCircles(imageBlurredGray, image);
+                //If warped is working
+                std::pair<int, int> outerSize(25, 60);
+                std::pair<int, int> innerSize(10, 18);
+                vector<Vec3f> circlesLarge = findCircles(outputWarped, outputWarped, outerSize, cv::Scalar(0, 130, 0));
+                vector<Vec3f> circlesSmall = findCircles(outputWarped, outputWarped, innerSize, cv::Scalar(120, 0, 120));
+
+                if(circlesLarge.size() == 1 && circlesSmall.size() == 1) {
+                    Vec3i cLarge = circlesLarge[0];
+                    cout << getAngleRobot(cv::Point(circlesLarge[0][0], circlesLarge[0][1]), cv::Point(circlesSmall[0][0], circlesSmall[0][1])) << endl;;
+                }
                 //cout << outputWarped.rows - imageCanny.rows << "      " << outputWarped.cols - imageCanny.cols << " " << outputWarped.empty() + imageCanny.empty() << endl;
-                //drawCircles(image , circles);
             }
 
             if(displayMode.getValue()) imshow("warped", outputWarped);   
-           }
 
                        end = clock();
  
@@ -178,9 +165,36 @@ int main(int argc, char** argv) {
             if(displayMode.getValue()) imshow("Canny Image", imageCanny);
 
 
-            if(!squareDetection.getValue()) createTrackbar(circleDetection.name, "Control Window", &circleDetection.selectedValue, circleDetection.getMaxValueForSlider(), callback_trackbar_circleDetection, &image);
+            //if(!squareDetection.getValue()) createTrackbar(circleDetection.name, "Control Window", &circleDetection.selectedValue, circleDetection.getMaxValueForSlider(), callback_trackbar_circleDetection, &image);
 
-            waitKey(0);
+            char option = waitKey(10);
+            switch(option) {
+                case 'q' :
+                    cout << "Q has been pressed -> Exiting ..." << endl;
+                    return -1;
+                    break;
+                case 'p' :
+                    cout << "P has been pressed -> Printing Current Config ...\n\n\n" << endl;
+                    paramController.printCurrentConfig();
+                    cout << endl;
+                    break;
+                case 'l' :
+                    {
+                        char loadKey = waitKey(0);
+                        cout << "\n\n\nTrying to load Config Nr. " << loadKey << "... \n\n" << endl;
+                        paramController.loadConfig((int) loadKey - 48);
+                        break;
+                    }
+                case 'c' :
+                    cout << "Clearing calibrated Corners ... \n\n" << endl;
+                    corners.clear();
+                    corners.push_back(Point(inputWidth/2, inputHeight/2));
+                    corners.push_back(Point(inputWidth/2, inputHeight/2)); 
+                    corners.push_back(Point(inputWidth/2, inputHeight/2));
+                    break;
+
+
+            }
             //paramController.printCurrentConfig();
         }
     return 0;

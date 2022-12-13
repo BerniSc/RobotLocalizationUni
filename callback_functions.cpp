@@ -10,8 +10,11 @@ void callback_trackbar_BlurMode(int mode, void* userData) {
 
 void callback_trackbar_BlurSize(int blurKernelValue, void* userData) {
     parameterDescription param = *(static_cast<parameterDescription*>(userData));
+    std::cout << param.name;
     blurKernelValue = blurKernelValue*2 +1;
+    //std::cout << "Hi  " << blurKernelValue << "     " << param.getValue() << std::endl; 
     param.selectedValue = blurKernelValue;
+    //std::cout << "Hi  " << blurKernelValue << "     " << param.getValue() << std::endl; 
 }
 
 void callback_trackbar_ThresholdCannyLow(int cannyLow, void* userData) {

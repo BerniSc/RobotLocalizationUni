@@ -7,6 +7,8 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
 
+#include "utility.hpp"
+
 struct parameterController;
 struct parameterDescription;
 
@@ -21,7 +23,7 @@ struct parameterController {
         void createTrackbars();
 
         void printCurrentConfig();
-        void loadConfig();
+        void loadConfig(int configNr);
 };
 
 struct parameterDescription {
