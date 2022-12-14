@@ -7,8 +7,9 @@
 #include "utility.hpp"
 
 const float sensitivity = 0.02f;
+const float sensitivityCorner = 0.4f;
 
-const int minSizeContour = 1000;
+const int minSizeContour = 100;
 const int maxSizeContour = 3500;
 
 bool sortByXAxis(const cv::Point &a, const cv::Point &b) {
@@ -66,7 +67,7 @@ void findSquares(const cv::Mat &imageCanny, cv::Mat &imageToDrawOn, std::vector<
             }
 
             //Wenn Cos kleiner als 0,3 dann Ecke fast 90°, deswegen Rechteck
-            if(maxCosine < 0.3) {
+            if(maxCosine < sensitivityCorner) {
                 drawSquares(imageToDrawOn, approx);
                 
                 sort(approx.begin(), approx.end(), sortByXAxis);

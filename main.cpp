@@ -16,11 +16,11 @@
 using namespace cv;
 using namespace std;
 
-const int destWidth = 440;
-const int destHeight = 440;
+const int destWidth = 600;//440
+const int destHeight = 600;//440
 
-const int inputWidth = 640;
-const int inputHeight = 480;
+const int inputWidth = 1280;//640
+const int inputHeight = 960;//480
 
 int blurModeGaussian = 0;
 vector<Point> corners;
@@ -142,10 +142,10 @@ int main(int argc, char** argv) {
                 //cout << "Trying find Circles" << endl;
                 //vector<Vec3f> circles = findCircles(imageBlurredGray, image);
                 //If warped is working
-                std::pair<int, int> outerSize(25, 60);
-                std::pair<int, int> innerSize(10, 18);
-                vector<Vec3f> circlesLarge = findCircles(outputWarped, outputWarped, outerSize, cv::Scalar(0, 130, 0));
+                std::pair<int, int> outerSize(20, 30);
+                std::pair<int, int> innerSize(6, 12);
                 vector<Vec3f> circlesSmall = findCircles(outputWarped, outputWarped, innerSize, cv::Scalar(120, 0, 120));
+                vector<Vec3f> circlesLarge = findCircles(outputWarped, outputWarped, outerSize, cv::Scalar(0, 130, 0));
 
                 if(circlesLarge.size() == 1 && circlesSmall.size() == 1) {
                     Vec3i cLarge = circlesLarge[0];
