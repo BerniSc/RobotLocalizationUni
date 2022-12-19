@@ -48,3 +48,7 @@ void callback_trackbar_circleDetection(int mode, void *userData) {
 void callback_trackbar_displayMode(int mode, void *userData) {
     parameterDescription param = *(static_cast<parameterDescription*>(userData));
 }
+
+void callback_trackbar_adaptiveMode(int mode, void *userData) {
+    parameterDescription param = *(static_cast<parameterDescription*>(userData));
+}

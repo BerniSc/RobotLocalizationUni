@@ -20,4 +20,6 @@ std::vector<std::string>& seperateString(std::string toSeperate, const char *sep
 void drawPoint(cv::Mat &image, const cv::Point &point, int sizeAdd = 0);
 double getAngleRobot(const cv::Point &center1, const cv::Point &center2);
 
+std::pair<double, double> getNormalizedPosition(const cv::Point &position, const std::pair<int, int> &size_cm, const std::pair<int, int> &size_px, const bool startBottomLeft = true);
+
 #endif

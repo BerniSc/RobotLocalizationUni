@@ -66,3 +66,18 @@ double getAngleRobot(const cv::Point &centerLarge, const cv::Point &centerSmall)
     angle *= (180/M_PI);
     return angle;
 }
+
+std::pair<double, double> getNormalizedPosition(const cv::Point &position, const std::pair<int, int> &size_cm, const std::pair<int, int> &size_px, const bool startBottomLeft) {
+    std::pair<double, double> normalizedPosition;
+
+    double x = double(position.x);
+    double y = double(position.y);
+
+    x = x * (double(size_cm.first) / double(size_px.first)); 
+    y = abs(startBottomLeft * size_cm.second - (y * (double(size_cm.second) / double(size_px.second))));
+
+    normalizedPosition.first = x;
+    normalizedPosition.second = y;
+
+    return normalizedPosition;
+}

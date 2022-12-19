@@ -17,5 +17,6 @@ void callback_trackbar_ThresholdHigh(int cannyLow, void* userData);
 void callback_trackbar_squareDetection(int mode, void *userData);
 void callback_trackbar_circleDetection(int mode, void *userData);
 void callback_trackbar_displayMode(int mode, void *userData);
+void callback_trackbar_adaptiveMode(int mode, void *userData);
 
 #endif
