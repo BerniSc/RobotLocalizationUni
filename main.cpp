@@ -9,6 +9,8 @@
 #include "callback_functions.hpp"
 #include "utility.hpp"
 
+#include "constants.hpp"
+
 #include <opencv2/video.hpp>
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/videoio.hpp"
