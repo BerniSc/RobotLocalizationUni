@@ -9,7 +9,7 @@
 const float sensitivity = 0.02f;
 const float sensitivityCorner = 0.4f;
 
-const int minSizeContour = 1000;//100
+const int minSizeContour = 100;//1000
 const int maxSizeContour = 3500;
 
 bool sortByXAxis(const cv::Point &a, const cv::Point &b) {

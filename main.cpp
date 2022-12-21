@@ -11,6 +11,9 @@
 
 #include "constants.hpp"
 
+#include "ros/ros.h"
+#include "std_msgs/String.h"
+
 #include <opencv2/video.hpp>
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/videoio.hpp"
@@ -18,11 +21,11 @@
 using namespace cv;
 using namespace std;
 
-const int destWidth = 440;//600
-const int destHeight = 440;//600
+const int destWidth = 400;//600//440
+const int destHeight = 400;//600//440
 
-const int inputWidth = 640;//1280
-const int inputHeight = 480;//960
+const int inputWidth = 960;//1280//640
+const int inputHeight = 960;//960//480
 
 //Actual Threshold Value for Adaptive Thresholding
 int adaptiveThresholdLower = 9;
@@ -56,6 +59,15 @@ Mat imageCanny;
 Mat imageBlurredGray;
 
 int main(int argc, char** argv) {
+    ros::init(argc, argv, "test");
+
+    ros::NodeHandle n;
+
+    ros::Publisher pub = n.advertise<std_msgs::String>("Test", 1000);
+    std_msgs::String test;
+    test.data = "Hi";
+    pub.publish(test);
+
     namedWindow("Control Window", WINDOW_AUTOSIZE);
     namedWindow("Normal Image", WINDOW_AUTOSIZE);
 
@@ -94,11 +106,11 @@ int main(int argc, char** argv) {
     // 2 für USB, -1 für Intern
     VideoCapture cap;
     //Open VideoCapture on chnl 2 at first (USB) if webcam attached
-    cap.open(2);
-    if(!cap.isOpened()) {
+    //cap.open(2);
+    //if(!cap.isOpened()) {
         //If Opening chnl 2 not possible open chnl -1 (Intern)
         cap.open(-1);
-    }
+    //}
 
     cap.set(cv::CAP_PROP_FRAME_WIDTH, inputWidth);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, inputHeight);
@@ -116,7 +128,7 @@ int main(int argc, char** argv) {
     int numFrames = 1;
     double msBetweenFrames, fpsLive;
 
-    while(1) {
+    while(1 && ros::ok()) {
         //Start Clock for FPS Counter
         start = clock();
         //Putting current Camera Image from Camerastream into Image Mat
@@ -139,7 +151,7 @@ int main(int argc, char** argv) {
         if(squareDetection.getValue()) findSquares(imageCanny, image, corners);
 
         //COLOR changed by Scalar -> Order is B-G-R
-        cv::putText(image, "MAX FPS: " + to_string(CAP_PROP_FPS), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
+        //cv::putText(image, "MAX FPS: " + to_string(CAP_PROP_FPS), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
         cv::putText(image, "FPS: " + to_string(fpsLive), {50, image.rows-50}, FONT_HERSHEY_COMPLEX, 1.5, Scalar(153, 153, 0), 2);
 
         cornersFloat[0] = corners.at(0);
@@ -160,7 +172,7 @@ int main(int argc, char** argv) {
             //cout << "Trying find Circles" << endl;
             //vector<Vec3f> circles = findCircles(imageBlurredGray, image);
             //If warped is working
-            std::pair<int, int> innerSize(10, 18);
+            std::pair<int, int> innerSize(8, 12);
             std::pair<int, int> outerSize(25, 60);
             vector<Vec3f> circlesSmall = findCircles(outputWarped, outputWarped, innerSize, cv::Scalar(120, 0, 120));
             vector<Vec3f> circlesLarge = findCircles(outputWarped, outputWarped, outerSize, cv::Scalar(0, 130, 0));
@@ -184,7 +196,7 @@ int main(int argc, char** argv) {
         switch(option) {
             case 'q' :
                 cout << "Q has been pressed -> Exiting ..." << endl;
-                return -1;
+                return 10;
                 break;
             case 'p' :
                 cout << "P has been pressed -> Printing Current Config ...\n\n\n" << endl;
@@ -218,6 +230,7 @@ int main(int argc, char** argv) {
                 adaptiveThresholdLower -= 2;
                 break;
         }
+        ros::spinOnce();
     }
     return 0;
 
