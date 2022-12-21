@@ -76,8 +76,9 @@ std::pair<double, double> getNormalizedPosition(const cv::Point &position, const
     x = x * (double(size_cm.first) / double(size_px.first)); 
     y = abs(startBottomLeft * size_cm.second - (y * (double(size_cm.second) / double(size_px.second))));
 
-    normalizedPosition.first = x;
-    normalizedPosition.second = y;
+    // return in meters -> conersion cm to m
+    normalizedPosition.first = x / 100;
+    normalizedPosition.second = y / 100;
 
     return normalizedPosition;
 }
