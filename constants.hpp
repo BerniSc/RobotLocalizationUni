@@ -30,4 +30,10 @@ namespace camera_consts {
     inline constexpr int maxSizeSquare = 3500;
 }
 
+//Constants for Debugging Purposes
+namespace debug_consts {
+    inline constexpr bool singleCameraSteps = false;
+    inline constexpr bool displayBuildInformations = true;
+}
+
 #endif

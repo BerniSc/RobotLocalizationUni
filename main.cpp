@@ -127,6 +127,8 @@ int main(int argc, char** argv) {
     int numFrames = 1;
     double msBetweenFrames, fpsLive;
 
+    if(debug_consts::displayBuildInformations) cerr << getBuildInformation();
+
     while(ros::ok()) {
         //Start Clock for FPS Counter BERNHARD @TODO
         start = clock();
@@ -195,7 +197,7 @@ int main(int argc, char** argv) {
         //Publish Message
         pub.publish(test);
 
-        char option = waitKey(0);
+        char option = waitKey(10 * !(debug_consts::singleCameraSteps));
         switch(option) {
             case 'q' :
                 cout << "Q has been pressed -> Exiting ..." << endl;
@@ -238,6 +240,4 @@ int main(int argc, char** argv) {
         ros::spinOnce();
     }
     return 0;
-
-    //cerr << getBuildInformation();
 }
