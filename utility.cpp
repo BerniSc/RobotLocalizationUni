@@ -8,7 +8,7 @@ cv::Mat getCanny(cv::Mat& original, parameterDescription &lowerThreshold, parame
 }
 
 cv::Mat getBlurred(cv::Mat& original, parameterDescription &blurMode, parameterDescription &blurSize) {
-    //std::cout << "\n           Tatsächliche Blur-Kernel Größe: " << blurSize.getValue() << std::endl;
+    std::cout << "\n           Tatsächliche Blur-Kernel Größe: " << blurSize.getValue() << std::endl;
     if(!(blurSize.getValue()%2)) return original;
     cv::Mat blurred;
     if(blurMode.getValue()) {

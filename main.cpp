@@ -21,11 +21,11 @@
 using namespace cv;
 using namespace std;
 
-const int destWidth = 400;//600//440
-const int destHeight = 400;//600//440
+const int destWidth = camera_consts::destWidth;
+const int destHeight = camera_consts::destHeight;
 
-const int inputWidth = 960;//1280//640
-const int inputHeight = 960;//960//480
+const int inputWidth = camera_consts::inputWidth;
+const int inputHeight = camera_consts::inputHeight;
 
 //Actual Threshold Value for Adaptive Thresholding
 int adaptiveThresholdLower = 9;
@@ -59,14 +59,13 @@ Mat imageCanny;
 Mat imageBlurredGray;
 
 int main(int argc, char** argv) {
-    ros::init(argc, argv, "test");
+    ros::init(argc, argv, "RobotDetection");
 
-    ros::NodeHandle n;
+    ros::NodeHandle nodeHandle;
 
-    ros::Publisher pub = n.advertise<std_msgs::String>("Test", 1000);
+    ros::Publisher pub = nodeHandle.advertise<std_msgs::String>(ros_consts::pose_PubSub_name, 1000);
     std_msgs::String test;
     test.data = "Hi";
-    pub.publish(test);
 
     namedWindow("Control Window", WINDOW_AUTOSIZE);
     namedWindow("Normal Image", WINDOW_AUTOSIZE);
@@ -84,7 +83,6 @@ int main(int argc, char** argv) {
     paramController.addParam(&displayMode);
     paramController.addParam(&thresholdAdaptive);
 
-    paramController.printCurrentConfig();
     paramController.createTrackbars();
 
     /********TESTING WARP***********/
@@ -106,11 +104,10 @@ int main(int argc, char** argv) {
     // 2 für USB, -1 für Intern
     VideoCapture cap;
     //Open VideoCapture on chnl 2 at first (USB) if webcam attached
-    //cap.open(2);
-    //if(!cap.isOpened()) {
+    if(!cap.isOpened() && !cap.open(2)) {
         //If Opening chnl 2 not possible open chnl -1 (Intern)
         cap.open(-1);
-    //}
+    }
 
     cap.set(cv::CAP_PROP_FRAME_WIDTH, inputWidth);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, inputHeight);
@@ -123,21 +120,23 @@ int main(int argc, char** argv) {
     colsImageStart = image.cols;
     rowsImageStart = image.rows;
 
+    //Start and End Variable for FPS Calculation
     clock_t start, end;
 
+    //Number of Frames Processed in given Time
     int numFrames = 1;
     double msBetweenFrames, fpsLive;
 
-    while(1 && ros::ok()) {
-        //Start Clock for FPS Counter
+    while(ros::ok()) {
+        //Start Clock for FPS Counter BERNHARD @TODO
         start = clock();
-        //Putting current Camera Image from Camerastream into Image Mat
+        //Putting current Camera Image from Camerastream into Image Mat @TODO
         cap >> image;
-        //Resising Image Mat
+        //Resising Image Mat @TODO
         resize(image, image, cv::Size(), (100-displayWindowSize.getValue())/100.0, (100-displayWindowSize.getValue())/100.0);
-        //Processing resized Image i.e. turing it gray etc 
+        //Processing resized Image i.e. turing it gray etc @TODO
         cvtColor(image, imageGray, COLOR_BGR2GRAY);
-        //Applying threshold for save in Processingpower if slider is activated
+        //Applying threshold for save in Processingpower if slider is activated @TODO
         //TODO -> EVTL auch adaptive Threshhold einfügen, -> 3. Param ist wert auf den gesetzt wird
         if(thresholdMode.getValue() && !thresholdAdaptive.getValue()) threshold(imageGray, imageGray, thresholdLow.getValue(), thresholdHigh.getValue(), THRESH_BINARY);
         if(thresholdMode.getValue() && thresholdAdaptive.getValue()) adaptiveThreshold(imageGray, imageGray, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, adaptiveThresholdUpper, adaptiveThresholdLower);
@@ -145,22 +144,24 @@ int main(int argc, char** argv) {
         imageBlurred = getBlurred(imageGray, blurMode, blurSize);
         imageCanny = getCanny(imageBlurred, cannyLow, cannyHigh);
 
-        imageBlurredGray = getBlurred(imageGray, blurMode, blurSize);
+        //Only Blur Gray Image if really needed
+        if(!circleDetection.getValue()) imageBlurredGray = getBlurred(imageGray, blurMode, blurSize);
 
-        //When Slider for Calibration Mode is activated Programm tries to find Corners
+        //When Slider for Calibration Mode is activated Programm tries to find Corners -> Saving them in "corners"
         if(squareDetection.getValue()) findSquares(imageCanny, image, corners);
 
         //COLOR changed by Scalar -> Order is B-G-R
         //cv::putText(image, "MAX FPS: " + to_string(CAP_PROP_FPS), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
         cv::putText(image, "FPS: " + to_string(fpsLive), {50, image.rows-50}, FONT_HERSHEY_COMPLEX, 1.5, Scalar(153, 153, 0), 2);
 
+        //Setting "cornersFloat" to their equivalent in "corners" -> implicit cast to float
         cornersFloat[0] = corners.at(0);
         cornersFloat[1] = corners.at(1);
         cornersFloat[2] = corners.at(2);
             
         warpMat = getAffineTransform(cornersFloat, destCorners);
-        //FOR DISPLAY PUROPOSES
-        //warpAffine(image, outputWarped, warpMat, Size(destWidth, destHeight));
+        //FOR DISPLAY PUROPOSES @TODO
+        //warpAffine(image, outputWarped, warpMat, Size(destWidth, destHeight)); @TODO
         if(circleDetection.getValue()) {
             warpAffine(imageGray, outputWarped, warpMat, Size(destWidth, destHeight));
         } else {
@@ -178,7 +179,6 @@ int main(int argc, char** argv) {
             vector<Vec3f> circlesLarge = findCircles(outputWarped, outputWarped, outerSize, cv::Scalar(0, 130, 0));
 
             if(circlesLarge.size() == 1 && circlesSmall.size() == 1) {
-                Vec3i cLarge = circlesLarge[0];
                 cout << getAngleRobot(cv::Point(circlesLarge[0][0], circlesLarge[0][1]), cv::Point(circlesSmall[0][0], circlesSmall[0][1])) << endl;
             }
         }
@@ -188,11 +188,14 @@ int main(int argc, char** argv) {
         msBetweenFrames = (double(end) - double(start)) / double(CLOCKS_PER_SEC);
         fpsLive = double(numFrames) / double(msBetweenFrames);
 
-        if(displayMode.getValue()) imshow("Normal Image", image);
+        if(displayMode.getValue()) imshow("Normal Image", image); 
         if(displayMode.getValue()) imshow("Canny Image", imageCanny);
         if(displayMode.getValue()) imshow("warped", outputWarped);   
 
-        char option = waitKey(10);
+        //Publish Message
+        pub.publish(test);
+
+        char option = waitKey(0);
         switch(option) {
             case 'q' :
                 cout << "Q has been pressed -> Exiting ..." << endl;
@@ -230,6 +233,8 @@ int main(int argc, char** argv) {
                 adaptiveThresholdLower -= 2;
                 break;
         }
+       
+        //Allows for invoking Callback-Functions
         ros::spinOnce();
     }
     return 0;

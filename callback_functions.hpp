@@ -1,5 +1,5 @@
-#ifndef CALLBACK_FUNCTIONS_H
-#define CALLBACK_FUNCTIONS_H
+#ifndef CALLBACK_FUNCTIONS_HPP
+#define CALLBACK_FUNCTIONS_HPP
 
 #include <opencv4/opencv2/core.hpp>
 #include "control_window_params.hpp"
