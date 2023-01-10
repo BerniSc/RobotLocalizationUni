@@ -10,7 +10,7 @@
 namespace ros_consts {
     //Initializing constexpr string requires string_view
     //Initializing as const still sufficient
-    inline const std::string pose_PubSub_name = "chatter";
+    inline const std::string pose_topic_name = "chatter";
 }
 
 //Constants for Configuration of camera Detection
@@ -33,7 +33,9 @@ namespace camera_consts {
 //Constants for Debugging Purposes
 namespace debug_consts {
     inline constexpr bool singleCameraSteps = false;
-    inline constexpr bool displayBuildInformations = true;
+    inline constexpr bool displayBuildInformations = false;
+    
+    inline constexpr bool drawDetectedCircles = true; 
 }
 
 #endif

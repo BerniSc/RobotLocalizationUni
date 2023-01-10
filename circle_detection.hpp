@@ -6,16 +6,15 @@
 #include <opencv4/opencv2/highgui/highgui.hpp>
 
 #include "utility.hpp"
+#include "constants.hpp"
 
 #include <iostream>
 #include <utility>
-
 
 void drawCircles(cv::Mat &input, const std::vector<cv::Vec3f> &circles, cv::Scalar colour = cv::Scalar(255, 0, 255));
 
 
 /**
- * @file
  * @brief Function to find the Circles in a given Image. Already calls drawing function 
  * 
  * @note in return vector [elem][0] x-Coordinate of center 
@@ -31,15 +30,4 @@ void drawCircles(cv::Mat &input, const std::vector<cv::Vec3f> &circles, cv::Scal
 */
 std::vector<cv::Vec3f> findCircles(cv::Mat &input, cv::Mat &inputDrawOn, const std::pair<int, int> &detectionSizes, cv::Scalar colour = cv::Scalar(255, 0, 255));
 
-#endif
-
-#if 0
-/**
- * @file
- * @brief Function to draw the given Circles in the given Image
- *
- * @param[in, out] input Reference to cv::Mat matrix of Image, where circle-drawing is desired   
- * @param[in] circles const Reference to std::vector<cv::Vec3f> where circles are specified 
- * @param[in] colour optional parameter of cv::Scalar to specify special colour for circle-drawing. Otherwise the standard colour is picked
-*/
 #endif

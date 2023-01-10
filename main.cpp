@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 
     ros::NodeHandle nodeHandle;
 
-    ros::Publisher pub = nodeHandle.advertise<std_msgs::String>(ros_consts::pose_PubSub_name, 1000);
+    ros::Publisher pub = nodeHandle.advertise<std_msgs::String>(ros_consts::pose_topic_name, 1000);
     std_msgs::String test;
     test.data = "Hi";
 
@@ -171,10 +171,6 @@ int main(int argc, char** argv) {
         }
 
         if(!squareDetection.getValue()) {
-            //For Testing -> warped not allways availabe
-            //cout << "Trying find Circles" << endl;
-            //vector<Vec3f> circles = findCircles(imageBlurredGray, image);
-            //If warped is working
             std::pair<int, int> innerSize(8, 12);
             std::pair<int, int> outerSize(25, 60);
             vector<Vec3f> circlesSmall = findCircles(outputWarped, outputWarped, innerSize, cv::Scalar(120, 0, 120));
