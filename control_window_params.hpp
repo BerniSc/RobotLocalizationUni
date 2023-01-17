@@ -13,8 +13,11 @@ struct parameterController;
 struct parameterDescription;
 
 struct parameterController {
+    private:
+        std::string windowName = "Control Window";
     public:
         parameterController() = default;
+        parameterController(std::string windowName);
 
         std::vector<parameterDescription*>  descriptors;
 
@@ -27,24 +30,23 @@ struct parameterController {
 };
 
 struct parameterDescription {
-    public:
+    private:
         const int minValue;
         const int maxValue;
         
         int startValue;
         
         const std::string name;
-
         cv::TrackbarCallback callbackFunction;
-
+    public:
         int selectedValue = -1;
     
-        parameterDescription(int minValue, int maxValue, int startValue, std::string name, cv::TrackbarCallback callbackFunction) : minValue(minValue), maxValue(maxValue), startValue(startValue), name(name), callbackFunction(callbackFunction) {
+        parameterDescription(int minValue, int maxValue, int startValue, std::string name, cv::TrackbarCallback callbackFunction);
 
-        }
-
-        int getValue();
-        int getMaxValueForSlider();
+        std::string getName() const;
+        cv::TrackbarCallback getCallbackFunction() const;
+        int getValue() const;
+        int getMaxValueForSlider() const;
 }; 
 
 #endif

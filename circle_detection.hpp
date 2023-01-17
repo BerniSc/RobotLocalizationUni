@@ -13,7 +13,6 @@
 
 void drawCircles(cv::Mat &input, const std::vector<cv::Vec3f> &circles, cv::Scalar colour = cv::Scalar(255, 0, 255));
 
-
 /**
  * @brief Function to find the Circles in a given Image. Already calls drawing function 
  * 

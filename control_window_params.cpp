@@ -1,5 +1,9 @@
 #include "control_window_params.hpp"
 
+parameterController::parameterController(std::string windowName) : windowName(windowName) {
+
+}
+
 void parameterController::addParam(parameterDescription* param) {
     parameterController::descriptors.push_back(param);
 }
@@ -7,7 +11,7 @@ void parameterController::addParam(parameterDescription* param) {
 void parameterController::printCurrentConfig() {
     std::cout << "-----===== Your Current Config =====-----" << std::endl;
     for(auto descriptor : parameterController::descriptors) {
-        std::cout << descriptor->name << " # " << descriptor->getValue() << std::endl;
+        std::cout << descriptor->getName() << " # " << descriptor->getValue() << std::endl;
     }
     std::cout << "_________________________________________" << std::endl;
 }
@@ -32,17 +36,29 @@ void parameterController::loadConfig(unsigned long configNr) {
 
 void parameterController::createTrackbars() {
     for(auto descriptor : parameterController::descriptors) {
-        cv::createTrackbar(descriptor->name, "Control Window", &descriptor->selectedValue, descriptor->getMaxValueForSlider(), descriptor->callbackFunction, descriptor);
+        cv::createTrackbar(descriptor->getName(), this->windowName, &descriptor->selectedValue, descriptor->getMaxValueForSlider(), descriptor->getCallbackFunction(), descriptor);
     }
 }
 
-int parameterDescription::getValue() {
+parameterDescription::parameterDescription(int minValue, int maxValue, int startValue, std::string name, cv::TrackbarCallback callbackFunction) : minValue(minValue), maxValue(maxValue), startValue(startValue), name(name), callbackFunction(callbackFunction) {
+
+}
+
+std::string parameterDescription::getName() const {
+    return this->name;
+}
+
+cv::TrackbarCallback parameterDescription::getCallbackFunction() const {
+    return this->callbackFunction;
+}
+
+int parameterDescription::getValue() const {
     if(parameterDescription::selectedValue == -1) {
         return parameterDescription::startValue;
     }
     return parameterDescription::selectedValue - parameterDescription::minValue;
 }
 
-int parameterDescription::getMaxValueForSlider() {
+int parameterDescription::getMaxValueForSlider() const {
     return parameterDescription::maxValue + abs(parameterDescription::minValue);
 }

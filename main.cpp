@@ -1,6 +1,7 @@
 #include <opencv4/opencv2/highgui.hpp>
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
+
 #include <iostream>
 
 #include "control_window_params.hpp"
@@ -8,15 +9,14 @@
 #include "circle_detection.hpp"
 #include "callback_functions.hpp"
 #include "utility.hpp"
-
 #include "constants.hpp"
 
-#include "ros/ros.h"
-#include "std_msgs/String.h"
+#include <ros/ros.h>
+#include <std_msgs/String.h>
 
-#include <opencv2/video.hpp>
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/videoio.hpp"
+//#include <opencv2/video.hpp>
+//#include "opencv2/imgcodecs.hpp"
+//#include "opencv2/videoio.hpp"
 
 using namespace cv;
 using namespace std;
@@ -85,6 +85,24 @@ int main(int argc, char** argv) {
 
     paramController.createTrackbars();
 
+    #ifdef DEV_MODE
+        namedWindow("Dev", WINDOW_GUI_EXPANDED);
+
+        parameterDescription inverseAccumulator(1, 10, 1, "Inverse Accumulator", callback_trackbar_inverseAccumulator);
+        parameterDescription minimumDistanceCircles(1, 25, 16, "Divisor of Inputrows for min. dist. circles", callback_trackbar_minDistCircles);
+        parameterDescription upperCannyCircles(50, 180, 100, "Upper Canny Threshold for Circles", callback_trackbar_upperCannyCircle);
+        parameterDescription centerDetectionThreshold(20, 50, 30, "Threshold for Center detection", callback_trackbar_thresholdCenterDetection);
+
+        parameterController devController("Dev");
+
+        devController.addParam(&inverseAccumulator);
+        devController.addParam(&minimumDistanceCircles);
+        devController.addParam(&upperCannyCircles);
+        devController.addParam(&centerDetectionThreshold);
+
+        devController.createTrackbars();
+    #endif
+
     /********TESTING WARP***********/
     namedWindow("warped", 0);
     Point2f cornersFloat[3];
@@ -104,7 +122,7 @@ int main(int argc, char** argv) {
     // 2 für USB, -1 für Intern
     VideoCapture cap;
     //Open VideoCapture on chnl 2 at first (USB) if webcam attached
-    if(!cap.isOpened() && !cap.open(2)) {
+    if(!cap.open(2) || !cap.isOpened()) {
         //If Opening chnl 2 not possible open chnl -1 (Intern)
         cap.open(-1);
     }
@@ -192,6 +210,11 @@ int main(int argc, char** argv) {
 
         //Publish Message
         pub.publish(test);
+
+        #ifdef DEV_MODE
+        //Maybe pass Parameter ref to pub or smthg
+            setMouseCallback("warped", callback_mouse_doubleclicked, NULL);
+        #endif
 
         char option = waitKey(10 * !(debug_consts::singleCameraSteps));
         switch(option) {
