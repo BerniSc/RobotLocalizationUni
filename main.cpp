@@ -2,6 +2,9 @@
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 
+#include <geometry_msgs/Pose2D.h>
+#include <turtlesim/Pose.h>
+
 #include <iostream>
 
 #include "control_window_params.hpp"
@@ -13,6 +16,7 @@
 
 #include <ros/ros.h>
 #include <std_msgs/String.h>
+#include <geometry_msgs/Point.h>
 
 //#include <opencv2/video.hpp>
 //#include "opencv2/imgcodecs.hpp"
@@ -58,12 +62,15 @@ Mat imageCanny;
 
 Mat imageBlurredGray;
 
+double angleRobot = 0;
+
 int main(int argc, char** argv) {
     ros::init(argc, argv, "RobotDetection");
 
     ros::NodeHandle nodeHandle;
 
-    ros::Publisher pub = nodeHandle.advertise<std_msgs::String>(ros_consts::pose_topic_name, 1000);
+    ros::Publisher pub = nodeHandle.advertise<std_msgs::String>("pose_topic_name", 1000);
+
     std_msgs::String test;
     test.data = "Hi";
 
@@ -101,10 +108,23 @@ int main(int argc, char** argv) {
         devController.addParam(&centerDetectionThreshold);
 
         devController.createTrackbars();
+
+        ros::Publisher pose_pub = nodeHandle.advertise<turtlesim::Pose>(ros_consts::pose_topic_name, 1000);
+        ros::Publisher sim_pub = nodeHandle.advertise<turtlesim::Pose>(ros_consts::sim_topic_name, 1000);
+
+        test.data = "Hi";
     #endif
 
     /********TESTING WARP***********/
     namedWindow("warped", 0);
+
+
+    #ifdef DEV_MODE
+        //Maybe pass Parameter ref to pub or smthg
+        ros::Publisher goal_pub = nodeHandle.advertise<geometry_msgs::Point>(ros_consts::goal_topic_name, 1000);
+        setMouseCallback("warped", callback_mouse_doubleclicked, &goal_pub);
+    #endif
+
     Point2f cornersFloat[3];
     
     //Corners are at Top Left, Bottom Left and Bottom Right (Thats the Layout of Detection Bounds)
@@ -122,10 +142,10 @@ int main(int argc, char** argv) {
     // 2 für USB, -1 für Intern
     VideoCapture cap;
     //Open VideoCapture on chnl 2 at first (USB) if webcam attached
-    if(!cap.open(2) || !cap.isOpened()) {
+    //if(!cap.open(2) || !cap.isOpened()) {
         //If Opening chnl 2 not possible open chnl -1 (Intern)
         cap.open(-1);
-    }
+    //}
 
     cap.set(cv::CAP_PROP_FRAME_WIDTH, inputWidth);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, inputHeight);
@@ -189,14 +209,30 @@ int main(int argc, char** argv) {
         }
 
         if(!squareDetection.getValue()) {
-            std::pair<int, int> innerSize(8, 12);
-            std::pair<int, int> outerSize(25, 60);
+            std::pair<int, int> innerSize(12, 20);
+            std::pair<int, int> outerSize(20, 40);
             vector<Vec3f> circlesSmall = findCircles(outputWarped, outputWarped, innerSize, cv::Scalar(120, 0, 120));
             vector<Vec3f> circlesLarge = findCircles(outputWarped, outputWarped, outerSize, cv::Scalar(0, 130, 0));
 
             if(circlesLarge.size() == 1 && circlesSmall.size() == 1) {
-                cout << getAngleRobot(cv::Point(circlesLarge[0][0], circlesLarge[0][1]), cv::Point(circlesSmall[0][0], circlesSmall[0][1])) << endl;
+                angleRobot = getAngleRobot(cv::Point(circlesLarge[0][0], circlesLarge[0][1]), cv::Point(circlesSmall[0][0], circlesSmall[0][1])); 
+                cout << angleRobot << endl;
             }
+
+            #ifdef DEV_MODE
+
+                turtlesim::Pose pose_msg;
+                if(circlesLarge.size() == 1) {
+                    pair<double, double> normalizedPosition = getNormalizedPosition(cv::Point(circlesLarge[0][0], circlesLarge[0][1]), pair<int, int>(220, 220), pair<int, int>(camera_consts::destWidth, camera_consts::destHeight));
+                    pose_msg.x = normalizedPosition.first / 100;
+                    pose_msg.y = normalizedPosition.second / 100;
+                    pose_msg.theta = angleRobot * (M_PI / 180.0);
+                    cout << pose_msg.theta << endl;
+                    pose_pub.publish(pose_msg);
+                    sim_pub.publish(pose_msg);
+                    cout << "Current Position and orientation: " << pose_msg.x << " " << pose_msg.y << "    " << pose_msg.theta << endl;
+                }
+            #endif
         }
 
         end = clock();
@@ -210,11 +246,6 @@ int main(int argc, char** argv) {
 
         //Publish Message
         pub.publish(test);
-
-        #ifdef DEV_MODE
-        //Maybe pass Parameter ref to pub or smthg
-            setMouseCallback("warped", callback_mouse_doubleclicked, NULL);
-        #endif
 
         char option = waitKey(10 * !(debug_consts::singleCameraSteps));
         switch(option) {

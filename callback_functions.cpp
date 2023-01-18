@@ -72,6 +72,12 @@ void callback_trackbar_thresholdCenterDetection(int mode, void *userData) {
 
 void callback_mouse_doubleclicked(int event, int x, int y, int flags, void* userData) {
     if(event == cv::EVENT_LBUTTONDBLCLK) {
+        ros::Publisher *pub = static_cast<ros::Publisher*>(userData);
         std::cout << "Mouse has been double Clicked over Warped Image -> publishing goto Point " << x << "|" << y << std::endl; 
+        geometry_msgs::Point goal_msg;
+        goal_msg.x = x;
+        goal_msg.y = y;
+        goal_msg.z = 0;
+        pub->publish(goal_msg);
     }
 }

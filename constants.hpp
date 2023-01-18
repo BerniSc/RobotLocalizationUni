@@ -12,7 +12,12 @@
 namespace ros_consts {
     //Initializing constexpr string requires string_view
     //Initializing as const still sufficient
-    inline const std::string pose_topic_name = "chatter";
+    inline const std::string pose_topic_name = "/robot_1/pose";
+
+    inline const bool sim = true;
+    inline const std::string sim_topic_name = "/Robot1/pose2DCam";
+
+    inline const std::string goal_topic_name = "/robot_1/goal_point";
 }
 
 //Constants for Configuration of camera Detection
@@ -23,8 +28,8 @@ namespace camera_consts {
     inline constexpr int inputHeight = 960; //480
 
     //Size of Final Detection Window and its "Resolution"
-    inline constexpr int destWidth = 400;
-    inline constexpr int destHeight = 400;
+    inline constexpr int destWidth = 800; //400
+    inline constexpr int destHeight = 800;  //400
 
 
     //Min and Max Size of the Detected Squares and their Contours

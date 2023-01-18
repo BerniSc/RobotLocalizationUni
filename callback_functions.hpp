@@ -4,6 +4,8 @@
 #include <opencv4/opencv2/core.hpp>
 //FOR MOUSE (DEV)
 #include <opencv4/opencv2/highgui.hpp>
+#include <ros/ros.h>
+#include <geometry_msgs/Point.h>
 
 #include "control_window_params.hpp"
 

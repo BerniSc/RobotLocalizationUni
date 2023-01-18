@@ -59,8 +59,8 @@ void drawPoint(cv::Mat &image, const cv::Point &point, int sizeAdd) {
 }
 
 double getAngleRobot(const cv::Point &centerLarge, const cv::Point &centerSmall) {
-    double deltaX = double(centerLarge.x) - centerSmall.x;
-    double deltaY = double(centerLarge.y) - centerSmall.y;
+    double deltaX = - double(centerLarge.x) + centerSmall.x;
+    double deltaY = - double(centerLarge.y) + centerSmall.y;
     //For normal coordinates +, but with - for "image coordinates"
     double angle = - std::atan2(deltaY, deltaX);
     angle *= (180/M_PI);
