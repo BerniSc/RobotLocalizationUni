@@ -25,3 +25,14 @@ std::vector<cv::Vec3f> findCircles(cv::Mat &input, cv::Mat &inputDrawOn, const s
 
     return circles;
 }
+
+std::vector<cv::Vec3f> findCircles(cv::Mat &input, cv::Mat &inputDrawOn, const std::pair<int, int> &detectionSizes, parameterController &circle_params, cv::Scalar colour) {
+        std::vector<cv::Vec3f> circles;
+
+    //cv::HoughCircles(input, circles, cv::HOUGH_GRADIENT, 1, input.rows / 16, 100, 30, diameterStart, diameterEnd);
+    cv::HoughCircles(input, circles, cv::HOUGH_GRADIENT, circle_params.descriptors[0]->getValue(), input.rows / float(circle_params.descriptors[1]->getValue()), circle_params.descriptors[2]->getValue(), circle_params.descriptors[3]->getValue(), detectionSizes.first, detectionSizes.second);
+
+    if(debug_consts::drawDetectedCircles) drawCircles(inputDrawOn, circles, colour);
+
+    return circles;
+}
