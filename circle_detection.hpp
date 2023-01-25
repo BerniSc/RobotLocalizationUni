@@ -5,11 +5,11 @@
 #include <opencv4/opencv2/imgproc/imgproc.hpp>
 #include <opencv4/opencv2/highgui/highgui.hpp>
 
-#include "utility.hpp"
-#include "constants.hpp"
-
 #include <iostream>
 #include <utility>
+
+#include "utility.hpp"
+#include "constants.hpp"
 
 void drawCircles(cv::Mat &input, const std::vector<cv::Vec3f> &circles, cv::Scalar colour = cv::Scalar(255, 0, 255));
 
@@ -27,11 +27,5 @@ void drawCircles(cv::Mat &input, const std::vector<cv::Vec3f> &circles, cv::Scal
  * 
  * @return returns "output" float Vector of found circles. One element means one circle
 */
-#ifndef DEV_MODE
-std::vector<cv::Vec3f> findCircles(cv::Mat &input, cv::Mat &inputDrawOn, const std::pair<int, int> &detectionSizes, parameterController &circle_params, cv::Scalar colour = cv::Scalar(255, 0, 255));
-#endif
-#ifdef DEV_MODE
 std::vector<cv::Vec3f> findCircles(cv::Mat &input, cv::Mat &inputDrawOn, const std::pair<int, int> &detectionSizes, cv::Scalar colour = cv::Scalar(255, 0, 255));
-#endif
-
 #endif

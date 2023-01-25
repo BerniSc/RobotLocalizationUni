@@ -58,12 +58,15 @@ void drawPoint(cv::Mat &image, const cv::Point &point, int sizeAdd) {
     circle(image, point, 1, cv::Scalar(0, 255, 0), 3+sizeAdd, cv::LINE_AA);
 }
 
-double getAngleRobot(const cv::Point &centerLarge, const cv::Point &centerSmall) {
-    double deltaX = - double(centerLarge.x) + centerSmall.x;
-    double deltaY = - double(centerLarge.y) + centerSmall.y;
+double getAngleRobot(const cv::Point &centerLarge, const cv::Point &centerSmall, const bool degree) {
+    double deltaX = centerSmall.x - double(centerLarge.x);
+    double deltaY = centerSmall.y - double(centerLarge.y);
+    
     //For normal coordinates +, but with - for "image coordinates"
     double angle = - std::atan2(deltaY, deltaX);
-    angle *= (180/M_PI);
+    
+    if(degree) angle *= (180/M_PI);
+    
     return angle;
 }
 
@@ -76,8 +79,9 @@ std::pair<double, double> getNormalizedPosition(const cv::Point &position, const
     x = x * (double(size_cm.first) / double(size_px.first)); 
     y = abs(startBottomLeft * size_cm.second - (y * (double(size_cm.second) / double(size_px.second))));
 
-    normalizedPosition.first = x;
-    normalizedPosition.second = y;
+    //Output in m
+    normalizedPosition.first = x / 100;
+    normalizedPosition.second = y / 100;
 
     return normalizedPosition;
 }

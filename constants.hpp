@@ -31,6 +31,11 @@ namespace camera_consts {
     inline constexpr int destWidth = 800; //400
     inline constexpr int destHeight = 800;  //400
 
+    inline constexpr float sensitivity = 0.02f;
+    inline constexpr float sensitivityCorner = 0.4f;
+
+    inline constexpr std::pair<int, int> innerSize(12, 20);
+    inline constexpr std::pair<int, int> outerSize(20, 40);
 
     //Min and Max Size of the Detected Squares and their Contours
     inline constexpr int minSizeSquare = 100;//100//1000
@@ -42,6 +47,7 @@ namespace debug_consts {
     inline constexpr bool singleCameraSteps = false;
     inline constexpr bool displayBuildInformations = false;
     
+    inline constexpr bool printPublishedValues = true;
     inline constexpr bool drawDetectedCircles = true; 
 }
 

@@ -24,14 +24,6 @@ void callback_trackbar_circleDetection(int mode, void *userData);
 void callback_trackbar_displayMode(int mode, void *userData);
 void callback_trackbar_adaptiveMode(int mode, void *userData);
 
-#ifdef DEV_MODE
-    void callback_trackbar_inverseAccumulator(int mode, void *userData);
-    void callback_trackbar_minDistCircles(int mode, void *userData);
-    void callback_trackbar_upperCannyCircle(int mode, void *userData);
-    void callback_trackbar_thresholdCenterDetection(int mode, void *userData);
 
-
-    void callback_mouse_doubleclicked(int event, int x, int y, int flags, void* userData);
-#endif
-
+void callback_mouse_doubleclicked(int event, int x, int y, int flags, void* userData);
 #endif

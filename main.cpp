@@ -2,6 +2,9 @@
 #include <opencv4/opencv2/core.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 
+#include <ros/ros.h>
+#include <std_msgs/String.h>
+#include <geometry_msgs/Point.h>
 #include <geometry_msgs/Pose2D.h>
 #include <turtlesim/Pose.h>
 
@@ -14,17 +17,10 @@
 #include "utility.hpp"
 #include "constants.hpp"
 
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-#include <geometry_msgs/Point.h>
-
-//#include <opencv2/video.hpp>
-//#include "opencv2/imgcodecs.hpp"
-//#include "opencv2/videoio.hpp"
-
 using namespace cv;
 using namespace std;
 
+//Set in "constants.hpp"
 const int destWidth = camera_consts::destWidth;
 const int destHeight = camera_consts::destHeight;
 
@@ -53,15 +49,15 @@ parameterDescription circleDetection(0, 1, 1, "Clear Gray Circledetection Mode",
 parameterDescription displayMode(0, 1, 1, "Display Mode", callback_trackbar_displayMode);
 parameterDescription thresholdAdaptive(0, 1, 0, "Binary (0) or Adaptive (1) Threshold", callback_trackbar_adaptiveMode);
 
-int colsImageStart, rowsImageStart;
-
+//Creating used "Images"
 Mat image;
 Mat imageGray;
 Mat imageBlurred;
 Mat imageCanny;
-
+//Optional image -> used if slider acitvated use
 Mat imageBlurredGray;
 
+//Initialising angle of Robot to 0
 double angleRobot = 0;
 
 int main(int argc, char** argv) {
@@ -69,13 +65,13 @@ int main(int argc, char** argv) {
 
     ros::NodeHandle nodeHandle;
 
-    ros::Publisher pub = nodeHandle.advertise<std_msgs::String>("pose_topic_name", 1000);
-
-    std_msgs::String test;
-    test.data = "Hi";
+    ros::Publisher pose_pub = nodeHandle.advertise<turtlesim::Pose>(ros_consts::pose_topic_name, 1000);
+    ros::Publisher sim_pub = nodeHandle.advertise<turtlesim::Pose>(ros_consts::sim_topic_name, 1000);
+    ros::Publisher goal_pub = nodeHandle.advertise<geometry_msgs::Point>(ros_consts::goal_topic_name, 1000);
 
     namedWindow("Control Window", WINDOW_AUTOSIZE);
     namedWindow("Normal Image", WINDOW_AUTOSIZE);
+    namedWindow("warped", WINDOW_AUTOSIZE);
 
     paramController.addParam(&thresholdMode);
     paramController.addParam(&blurMode);
@@ -92,41 +88,13 @@ int main(int argc, char** argv) {
 
     paramController.createTrackbars();
 
-    #ifdef DEV_MODE
-        namedWindow("Dev", WINDOW_GUI_EXPANDED);
+    //Attach callback function for waypoint Publishing to Warped Img
+    setMouseCallback("warped", callback_mouse_doubleclicked, &goal_pub);
 
-        parameterDescription inverseAccumulator(1, 10, 1, "Inverse Accumulator", callback_trackbar_inverseAccumulator);
-        parameterDescription minimumDistanceCircles(1, 25, 16, "Divisor of Inputrows for min. dist. circles", callback_trackbar_minDistCircles);
-        parameterDescription upperCannyCircles(50, 180, 100, "Upper Canny Threshold for Circles", callback_trackbar_upperCannyCircle);
-        parameterDescription centerDetectionThreshold(20, 50, 30, "Threshold for Center detection", callback_trackbar_thresholdCenterDetection);
-
-        parameterController devController("Dev");
-
-        devController.addParam(&inverseAccumulator);
-        devController.addParam(&minimumDistanceCircles);
-        devController.addParam(&upperCannyCircles);
-        devController.addParam(&centerDetectionThreshold);
-
-        devController.createTrackbars();
-
-        ros::Publisher pose_pub = nodeHandle.advertise<turtlesim::Pose>(ros_consts::pose_topic_name, 1000);
-        ros::Publisher sim_pub = nodeHandle.advertise<turtlesim::Pose>(ros_consts::sim_topic_name, 1000);
-
-        test.data = "Hi";
-    #endif
-
-    /********TESTING WARP***********/
-    namedWindow("warped", 0);
-
-
-    #ifdef DEV_MODE
-        //Maybe pass Parameter ref to pub or smthg
-        ros::Publisher goal_pub = nodeHandle.advertise<geometry_msgs::Point>(ros_consts::goal_topic_name, 1000);
-        setMouseCallback("warped", callback_mouse_doubleclicked, &goal_pub);
-    #endif
-
+    //detected corners
     Point2f cornersFloat[3];
     
+    //Corners the detected Corners are mapped to
     //Corners are at Top Left, Bottom Left and Bottom Right (Thats the Layout of Detection Bounds)
     Point2f destCorners[3] = {Point(0, 0), Point(0, destHeight), Point(destWidth, destHeight)};
 
@@ -139,24 +107,17 @@ int main(int argc, char** argv) {
     corners.push_back(Point(inputWidth/2, inputHeight/2)); 
     corners.push_back(Point(inputWidth/2, inputHeight/2));
 
-    // 2 für USB, -1 für Intern
+    //Open Webcam
     VideoCapture cap;
-    //Open VideoCapture on chnl 2 at first (USB) if webcam attached
-    //if(!cap.open(2) || !cap.isOpened()) {
-        //If Opening chnl 2 not possible open chnl -1 (Intern)
-        cap.open(-1);
-    //}
-
+    cap.open(-1);
+ 
     cap.set(cv::CAP_PROP_FRAME_WIDTH, inputWidth);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, inputHeight);
        
-    //** TODO - Anschauen ob behalten oder wegmachen **//
     cap.set(cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
     cap.set(CAP_PROP_FPS, 30);
 
     cap >> image;
-    colsImageStart = image.cols;
-    rowsImageStart = image.rows;
 
     //Start and End Variable for FPS Calculation
     clock_t start, end;
@@ -168,16 +129,14 @@ int main(int argc, char** argv) {
     if(debug_consts::displayBuildInformations) cerr << getBuildInformation();
 
     while(ros::ok()) {
-        //Start Clock for FPS Counter BERNHARD @TODO
+        //Start Clock for FPS Counter
         start = clock();
-        //Putting current Camera Image from Camerastream into Image Mat @TODO
+        //Putting current Camera Image from Camerastream into Image Mat
         cap >> image;
-        //Resising Image Mat @TODO
+        //Resising Image Mat
         resize(image, image, cv::Size(), (100-displayWindowSize.getValue())/100.0, (100-displayWindowSize.getValue())/100.0);
-        //Processing resized Image i.e. turing it gray etc @TODO
+        //Processing resized Image i.e. turing it gray etc
         cvtColor(image, imageGray, COLOR_BGR2GRAY);
-        //Applying threshold for save in Processingpower if slider is activated @TODO
-        //TODO -> EVTL auch adaptive Threshhold einfügen, -> 3. Param ist wert auf den gesetzt wird
         if(thresholdMode.getValue() && !thresholdAdaptive.getValue()) threshold(imageGray, imageGray, thresholdLow.getValue(), thresholdHigh.getValue(), THRESH_BINARY);
         if(thresholdMode.getValue() && thresholdAdaptive.getValue()) adaptiveThreshold(imageGray, imageGray, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, adaptiveThresholdUpper, adaptiveThresholdLower);
 
@@ -190,8 +149,7 @@ int main(int argc, char** argv) {
         //When Slider for Calibration Mode is activated Programm tries to find Corners -> Saving them in "corners"
         if(squareDetection.getValue()) findSquares(imageCanny, image, corners);
 
-        //COLOR changed by Scalar -> Order is B-G-R
-        //cv::putText(image, "MAX FPS: " + to_string(CAP_PROP_FPS), {25, 50}, FONT_HERSHEY_PLAIN, 2, Scalar(153, 153, 0), 3);
+        //COLOUR changed by Scalar -> Order is B-G-R
         cv::putText(image, "FPS: " + to_string(fpsLive), {50, image.rows-50}, FONT_HERSHEY_COMPLEX, 1.5, Scalar(153, 153, 0), 2);
 
         //Setting "cornersFloat" to their equivalent in "corners" -> implicit cast to float
@@ -200,8 +158,7 @@ int main(int argc, char** argv) {
         cornersFloat[2] = corners.at(2);
             
         warpMat = getAffineTransform(cornersFloat, destCorners);
-        //FOR DISPLAY PUROPOSES @TODO
-        //warpAffine(image, outputWarped, warpMat, Size(destWidth, destHeight)); @TODO
+        //Warping either blurred Image or normal image
         if(circleDetection.getValue()) {
             warpAffine(imageGray, outputWarped, warpMat, Size(destWidth, destHeight));
         } else {
@@ -209,45 +166,41 @@ int main(int argc, char** argv) {
         }
 
         if(!squareDetection.getValue()) {
-            std::pair<int, int> innerSize(12, 20);
-            std::pair<int, int> outerSize(20, 40);
-            vector<Vec3f> circlesSmall = findCircles(outputWarped, outputWarped, innerSize, cv::Scalar(120, 0, 120));
-            vector<Vec3f> circlesLarge = findCircles(outputWarped, outputWarped, outerSize, cv::Scalar(0, 130, 0));
+            vector<Vec3f> circlesSmall = findCircles(outputWarped, outputWarped, camera_consts::innerSize, cv::Scalar(120, 0, 120));
+            vector<Vec3f> circlesLarge = findCircles(outputWarped, outputWarped, camera_consts::outerSize, cv::Scalar(0, 130, 0));
 
+            //If more or less than one Circle-Pair detected, angle of robot remains the same 
             if(circlesLarge.size() == 1 && circlesSmall.size() == 1) {
-                angleRobot = getAngleRobot(cv::Point(circlesLarge[0][0], circlesLarge[0][1]), cv::Point(circlesSmall[0][0], circlesSmall[0][1])); 
-                cout << angleRobot << endl;
+                angleRobot = getAngleRobot(cv::Point(circlesLarge[0][0], circlesLarge[0][1]), cv::Point(circlesSmall[0][0], circlesSmall[0][1]), false); 
             }
 
-            #ifdef DEV_MODE
-
+            //If more than one Robot detected no values are published
+            if(circlesLarge.size() == 1) {
                 turtlesim::Pose pose_msg;
-                if(circlesLarge.size() == 1) {
-                    pair<double, double> normalizedPosition = getNormalizedPosition(cv::Point(circlesLarge[0][0], circlesLarge[0][1]), pair<int, int>(220, 220), pair<int, int>(camera_consts::destWidth, camera_consts::destHeight));
-                    pose_msg.x = normalizedPosition.first / 100;
-                    pose_msg.y = normalizedPosition.second / 100;
-                    pose_msg.theta = angleRobot * (M_PI / 180.0);
-                    cout << pose_msg.theta << endl;
-                    pose_pub.publish(pose_msg);
-                    sim_pub.publish(pose_msg);
-                    cout << "Current Position and orientation: " << pose_msg.x << " " << pose_msg.y << "    " << pose_msg.theta << endl;
-                }
-            #endif
+                //Getting Position in m
+                pair<double, double> normalizedPosition = getNormalizedPosition(cv::Point(circlesLarge[0][0], circlesLarge[0][1]), pair<int, int>(220, 220), pair<int, int>(camera_consts::destWidth, camera_consts::destHeight));
+                pose_msg.x = normalizedPosition.first;
+                pose_msg.y = normalizedPosition.second;
+                pose_msg.theta = angleRobot;
+
+                pose_pub.publish(pose_msg);
+                if(ros_consts::sim) sim_pub.publish(pose_msg);
+                
+                if(debug_consts::printPublishedValues) cout << "Current Position and orientation: " << pose_msg.x << "|" << pose_msg.y << "    " << pose_msg.theta << endl;
+            }
         }
 
         end = clock();
  
         msBetweenFrames = (double(end) - double(start)) / double(CLOCKS_PER_SEC);
+        
         fpsLive = double(numFrames) / double(msBetweenFrames);
 
         if(displayMode.getValue()) imshow("Normal Image", image); 
         if(displayMode.getValue()) imshow("Canny Image", imageCanny);
         if(displayMode.getValue()) imshow("warped", outputWarped);   
 
-        //Publish Message
-        pub.publish(test);
-
-        char option = waitKey(10 * !(debug_consts::singleCameraSteps));
+        char option = waitKey(5 * !(debug_consts::singleCameraSteps));
         switch(option) {
             case 'q' :
                 cout << "Q has been pressed -> Exiting ..." << endl;

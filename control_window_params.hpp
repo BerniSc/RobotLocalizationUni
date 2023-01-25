@@ -1,11 +1,12 @@
 #ifndef CONTROLL_WINDOW_HPP
 #define CONTROLL_WINDOW_HPP
 
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+
 #include <string>
 #include <vector>
 #include <iostream>
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/highgui.hpp"
 
 #include "utility.hpp"
 
@@ -14,10 +15,9 @@ struct parameterDescription;
 
 struct parameterController {
     private:
-        std::string windowName = "Control Window";
+        std::string windowName;
     public:
-        parameterController() = default;
-        parameterController(std::string windowName);
+        parameterController(std::string windowName = "Control Window");
 
         std::vector<parameterDescription*>  descriptors;
 

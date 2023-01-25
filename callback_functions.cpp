@@ -2,7 +2,7 @@
 
 /**
  * Second Parameter is pointer to parameterDescription object
- * It can be used to increase the Options for using the sliders from switching from start->end in single steps to something else 
+ * It can i.e. be used to increase the Options for using the sliders from switching from start->end in single steps to something else 
  * An exemplary implementation of this can be seen in callback_trackbar_BlurSize
 */
 
@@ -57,31 +57,14 @@ void callback_trackbar_adaptiveMode(int mode, void *userData) {
     //parameterDescription *param = static_cast<parameterDescription*>(userData);
 }
 
-void callback_trackbar_inverseAccumulator(int mode, void *userData) {
-    parameterDescription *param = static_cast<parameterDescription*>(userData);
-    param->selectedValue = mode;
-}
-void callback_trackbar_minDistCircles(int mode, void *userData) {
-        parameterDescription *param = static_cast<parameterDescription*>(userData);
-    param->selectedValue = mode;
-}
-void callback_trackbar_upperCannyCircle(int mode, void *userData) {
-        parameterDescription *param = static_cast<parameterDescription*>(userData);
-    param->selectedValue = mode;
-}
-void callback_trackbar_thresholdCenterDetection(int mode, void *userData) {
-        parameterDescription *param = static_cast<parameterDescription*>(userData);
-    param->selectedValue = mode;
-}
-
 void callback_mouse_doubleclicked(int event, int x, int y, int flags, void* userData) {
     if(event == cv::EVENT_LBUTTONDBLCLK) {
         ros::Publisher *pub = static_cast<ros::Publisher*>(userData);
         std::cout << "Mouse has been double Clicked over Warped Image -> publishing goto Point " << x << "|" << y << std::endl; 
         geometry_msgs::Point goal_msg;
         std::pair<double, double> normalizedPos = getNormalizedPosition(cv::Point(x, y), std::pair<int, int>(220, 220), std::pair<int, int>(800, 800));
-        goal_msg.x = normalizedPos.first / 100;
-        goal_msg.y = normalizedPos.second / 100;
+        goal_msg.x = normalizedPos.first;
+        goal_msg.y = normalizedPos.second;
         goal_msg.z = 0;
         pub->publish(goal_msg);
     }
