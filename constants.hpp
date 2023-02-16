@@ -3,7 +3,7 @@
 
 #include <string>
 
-#define DEV_MODE
+//#define DEV_MODE
 
 //Inline ensures every instance of constant is using same place in memory
 //Constants are seperated and collected in Namespaces

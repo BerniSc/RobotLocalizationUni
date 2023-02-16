@@ -21,44 +21,44 @@ using namespace cv;
 using namespace std;
 
 //Set in "constants.hpp"
-const int destWidth = camera_consts::destWidth;
-const int destHeight = camera_consts::destHeight;
+static const int destWidth = camera_consts::destWidth;
+static const int destHeight = camera_consts::destHeight;
 
-const int inputWidth = camera_consts::inputWidth;
-const int inputHeight = camera_consts::inputHeight;
+static const int inputWidth = camera_consts::inputWidth;
+static const int inputHeight = camera_consts::inputHeight;
 
 //Actual Threshold Value for Adaptive Thresholding
-int adaptiveThresholdLower = 9;
+static int adaptiveThresholdLower = 9;
 //Value averaging Pixels around out as "Kernel" -> Uneven
-int adaptiveThresholdUpper = 15;
+static int adaptiveThresholdUpper = 15;
 
-vector<Point> corners;
+static vector<Point> corners;
 
-parameterController paramController;
+static parameterController paramController;
 /**     Descriptors     **/
-parameterDescription thresholdMode(0, 1, 0, "Threshold Mode (Binary)", callback_trackbar_thresholdMode);
-parameterDescription blurMode(0, 1, 0, "Blur Mode", callback_trackbar_BlurMode);
-parameterDescription blurSize(0, 7, 9, "Bluring Size (1:=3 ,2:=5 etc.)", callback_trackbar_BlurSize);
-parameterDescription cannyLow(0, 60, 12, "Canny Threshold Low", callback_trackbar_ThresholdCannyLow);
-parameterDescription cannyHigh(0, 180, 35, "Canny Threshold High", callback_trackbar_ThresholdCannyHigh);
-parameterDescription displayWindowSize(0, 50, 0, "Displaywindow Size (in %)", callback_trackbar_DisplayWindowSize);
-parameterDescription thresholdLow(0,255, 80, "Lower Threshold Value", callback_trackbar_ThresholdLow);
-parameterDescription thresholdHigh(0, 255, 255, "Higher Threshold Value", callback_trackbar_ThresholdHigh);
-parameterDescription squareDetection(0, 1, 1, "Square Detection (Calib. Mode)", callback_trackbar_squareDetection);
-parameterDescription circleDetection(0, 1, 1, "Clear Gray Circledetection Mode", callback_trackbar_circleDetection);
-parameterDescription displayMode(0, 1, 1, "Display Mode", callback_trackbar_displayMode);
-parameterDescription thresholdAdaptive(0, 1, 0, "Binary (0) or Adaptive (1) Threshold", callback_trackbar_adaptiveMode);
+static parameterDescription thresholdMode(0, 1, 0, "Threshold Mode (Binary)", callback_trackbar_thresholdMode);
+static parameterDescription blurMode(0, 1, 0, "Blur Mode", callback_trackbar_BlurMode);
+static parameterDescription blurSize(0, 7, 9, "Bluring Size (1:=3 ,2:=5 etc.)", callback_trackbar_BlurSize);
+static parameterDescription cannyLow(0, 60, 12, "Canny Threshold Low", callback_trackbar_ThresholdCannyLow);
+static parameterDescription cannyHigh(0, 180, 35, "Canny Threshold High", callback_trackbar_ThresholdCannyHigh);
+static parameterDescription displayWindowSize(0, 50, 0, "Displaywindow Size (in %)", callback_trackbar_DisplayWindowSize);
+static parameterDescription thresholdLow(0,255, 80, "Lower Threshold Value", callback_trackbar_ThresholdLow);
+static parameterDescription thresholdHigh(0, 255, 255, "Higher Threshold Value", callback_trackbar_ThresholdHigh);
+static parameterDescription squareDetection(0, 1, 1, "Square Detection (Calib. Mode)", callback_trackbar_squareDetection);
+static parameterDescription circleDetection(0, 1, 1, "Clear Gray Circledetection Mode", callback_trackbar_circleDetection);
+static parameterDescription displayMode(0, 1, 1, "Display Mode", callback_trackbar_displayMode);
+static parameterDescription thresholdAdaptive(0, 1, 0, "Binary (0) or Adaptive (1) Threshold", callback_trackbar_adaptiveMode);
 
 //Creating used "Images"
-Mat image;
-Mat imageGray;
-Mat imageBlurred;
-Mat imageCanny;
+static Mat image;
+static Mat imageGray;
+static Mat imageBlurred;
+static Mat imageCanny;
 //Optional image -> used if slider acitvated use
-Mat imageBlurredGray;
+static Mat imageBlurredGray;
 
 //Initialising angle of Robot to 0
-double angleRobot = 0;
+static double angleRobot = 0;
 
 int main(int argc, char** argv) {
     ros::init(argc, argv, "RobotDetection");

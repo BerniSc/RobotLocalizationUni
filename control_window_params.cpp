@@ -61,9 +61,9 @@ int parameterDescription::getValue() const {
         return parameterDescription::startValue;
     }
     //return normalized Value
-    return parameterDescription::selectedValue - parameterDescription::minValue;
+    return parameterDescription::selectedValue + parameterDescription::minValue;
 }
 
 int parameterDescription::getMaxValueForSlider() const {
-    return parameterDescription::maxValue + abs(parameterDescription::minValue);
+    return abs(parameterDescription::maxValue - parameterDescription::minValue);
 }
